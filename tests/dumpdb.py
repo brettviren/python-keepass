@@ -9,8 +9,7 @@ except ImportError:
     sys.path.append(path)
     from keepass import kpdb
 
-print sys.argv
 filename = sys.argv[1]
 masterkey  = sys.argv[2]
-db = kpdb.Database(filename,masterkey)
+db = kpdb.Database(masterkey,filename)
 print db

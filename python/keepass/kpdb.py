@@ -14,38 +14,6 @@ General structure:
 
 import struct
 
-def nullify(buf):
-    return None
-
-def shunt(buf):
-    return buf
-
-def asciiify(buf):
-    from binascii import b2a_hex
-    return b2a_hex(buf).replace('\0','')
-
-def stringify(buf):
-    return buf.replace('\0','')
-
-def shortify(buf):
-    return struct.unpack("<H", buf)[0]
-
-def intify(buf):
-    return struct.unpack("<I", buf)[0]
-
-def dateify(buf):
-    from datetime import datetime
-    b = struct.unpack('<5B', buf)
-    year = (b[0] << 6) | (b[1] >> 2);
-    mon  = ((b[1] & 0b11)     << 2) | (b[2] >> 6);
-    day  = ((b[2] & 0b111111) >> 1);
-    hour = ((b[2] & 0b1)      << 4) | (b[3] >> 4);
-    min  = ((b[3] & 0b1111)   << 2) | (b[4] >> 6);
-    sec  = ((b[4] & 0b111111));
-    #print 'dateify:',b,buf,year, mon, day, hour, min, sec
-    return datetime(year, mon, day, hour, min, sec)
-
-    
 
 class DBHDR(object):
     '''Database header: [DBHDR]
@@ -95,6 +63,7 @@ Notes:
         ]
     
     signatures = (0x9AA2D903,0xB54BFB65)
+    length = 124
 
     encryption_flags = (
         ('SHA2',1),
@@ -104,12 +73,47 @@ Notes:
         ('TwoFish',8),
         )
 
-    def __init__(self,kpdb):
-        'Read self from the kpdb file object'
+    def __init__(self,buf=None):
+        'Create a header, read self from binary string if given'
+        if buf: self.decode(buf)
+        return
+
+    def __str__(self):
+        ret = ['Header:']
+        for field in DBHDR.format:
+            name = field[0]
+            size = field[1]
+            typ = field[2]
+            ret.append('\t%s %s'%(name,self.__dict__[name]))
+            continue
+        return '\n'.join(ret)
+
+    def encryption_type(self):
+        for encflag in DBHDR.encryption_flags[1:]:
+            if encflag[1] & self.dwFlags: return encflag[0]
+        return 'Unknown'
+
+    def encode(self):
+        'Provide binary string representation'
+
+        ret = ""
+
         for field in DBHDR.format:
             name,bytes,typecode = field
-            value = kpdb.read(bytes, typecode)
-            if len(value) == 1: value = value[0]
+            value = self.__dict__[name]
+            buf = struct.pack('<'+typecode,value)
+            ret += buf
+            continue
+        return ret
+
+    def decode(self,buf):
+        'Fill self from binary string.'
+        index = 0
+        for field in DBHDR.format:
+            name,nbytes,typecode = field
+            string = buf[index:index+nbytes]
+            index += nbytes
+            value = struct.unpack('<'+typecode, string)[0]
             self.__dict__[name] = value
             continue
 
@@ -122,48 +126,60 @@ Notes:
 
         return
 
-    def __len__(self):
-        length = 0
-        for field in format:
-            length += field[1] * self.fieldlength(field)
-        return length
+    pass                        # DBHDR
 
-    def __str__(self):
-        ret = ['Header:']
-        for field in DBHDR.format:
-            name = field[0]
-            size = field[1]
-            typ = field[2]
-            ret.append('%s:(%s) [%d] = %s'%(field,typ,size,self.__dict__[name]))
-            continue
-        return '\n'.join(ret)
+# return tupleof (decode,encode) functions
 
-    def encryption_type(self):
-        for encflag in DBHDR.encryption_flags[1:]:
-            if encflag[1] & self.dwFlags: return encflag[0]
-        return 'Unknown'
-    pass
+def null_de(): return (lambda buf:Null, lambda val:Null)
+def shunt_de(): return (lambda buf:buf, lambda val:val)
+
+def ascii_de():
+    from binascii import b2a_hex, a2b_hex
+    return (lambda buf:b2a_hex(buf).replace('\0',''), 
+            lambda val:a2b_hex(value)+'\0')
+
+def string_de():
+    return (lambda buf: buf.replace('\0',''), lambda val: val+'\-')
+
+def short_de():
+    return (lambda buf:struct.unpack("<H", buf)[0],
+            lambda val:struct.pack("<H", val))
+
+def int_de():
+    return (lambda buf:struct.unpack("<I", buf)[0],
+            lambda val:struct.pack("<I", val))
+
+def date_de():
+    from datetime import datetime
+    def decode(buf):
+        b = struct.unpack('<5B', buf)
+        year = (b[0] << 6) | (b[1] >> 2);
+        mon  = ((b[1] & 0b11)     << 2) | (b[2] >> 6);
+        day  = ((b[2] & 0b111111) >> 1);
+        hour = ((b[2] & 0b1)      << 4) | (b[3] >> 4);
+        min  = ((b[3] & 0b1111)   << 2) | (b[4] >> 6);
+        sec  = ((b[4] & 0b111111));
+        #print 'dateify:',b,buf,year, mon, day, hour, min, sec
+        return datetime(year, mon, day, hour, min, sec)
+
+    def encode(val):
+        year, mon, day, hour, min, sec = val
+        b=[]
+        b[0] = 0x0000FFFF & ( (year>>6)&0x0000003F )
+        b[1] = 0x0000FFFF & ( ((year&0x0000003f)<<2) | ((month>>2) & 0x00000003) )
+        b[2] = 0x0000FFFF & ( (( mon&0x00000003)<<6) | ((day&0x0000001F)<<1) | ((hour>>4)&0x00000001) )
+        b[3] = 0x0000FFFF & ( ((hour&0x0000000F)<<4) | ((min>>2)&0x0000000F) )
+        b[4] = 0x0000FFFF & ( (( min&0x00000003)<<6) | (sec&0x0000003F))
+        return struct.pack('<5B',b)
+    return (decode,encode)
 
 class InfoBase(object):
     'Base class for info type blocks'
-    def __init__(self,kpdb,format):
-        self.format = format
-        while True:
-            typ = kpdb.read(2,'H')[0]
-            siz = kpdb.read(4,'I')[0]
-            buf = kpdb.read(siz,'%ds'%siz)[0]
-            name,func = self.format[typ]
-            if name is None: break
-            try:
-                value = func(buf)
-            except struct.error,msg:
-                msg = '%s, typ = %d[%d] -> %s buf = "%s"'%(msg,typ,siz,self.format[typ],buf)
-                raise struct.error,msg
 
-            print '%s: type = %d[%d] -> %s buf = "%s" value = %s'%\
-                (name,typ,siz,self.format[typ],buf,str(value))
-            self.__dict__[name] = value
-            continue
+    def __init__(self,format,string=None):
+        self.format = format
+        self.order = []         # keep field order
+        if string: self.decode(string)
         return
 
     def __str__(self):
@@ -176,7 +192,57 @@ class InfoBase(object):
             ret.append('\t%s %s'%(form[0],value))
         return '\n'.join(ret)
 
+    def decode(self,string):
+        'Fill self from binary string'
+        index = 0
+        while True:
+            substr = string[index:index+6]
+            index += 6
+            typ,siz = struct.unpack('<H I',substr)
+            self.order.append((typ,siz))
+
+            substr = string[index:index+siz]
+            index += siz
+            buf = struct.unpack('<%ds'%siz,substr)[0]
+
+            name,decenc = self.format[typ]
+            if name is None: break
+            try:
+                value = decenc[0](buf)
+            except struct.error,msg:
+                msg = '%s, typ = %d[%d] -> %s buf = "%s"'%\
+                    (msg,typ,siz,self.format[typ],buf)
+                raise struct.error,msg
+
+            #print '%s: type = %d[%d] -> %s buf = "%s" value = %s'%\
+            #    (name,typ,siz,self.format[typ],buf,str(value))
+            self.__dict__[name] = value
+            continue
+        return
+
+    def __len__(self):
+        length = 0
+        for typ,siz in self.order:
+            length += 2+4+siz
+        return length
+
+    def encode(self):
+        'Return binary string representatoin'
+        string = ""
+        for typ,siz in self.order:
+            name,decenc = self.format(typ)
+            value = self.__dict__[name]
+            encoded = decenc[1](value)
+            buf = struct.pack('<H',typ)
+            buf += struct.pack('<I',siz)
+            buf += struct.pack('<$ds'%siz,encoded)
+            string += buf
+            continue
+        return string
+
     pass
+
+
 
 class GroupInfo(InfoBase):
     '''One group: [FIELDTYPE(FT)][FIELDSIZE(FS)][FIELDDATA(FD)]
@@ -204,21 +270,21 @@ Notes:
   '''
 
     format = {
-        0x0: ('Ignored',nullify),
-        0x1: ('GroupID',intify),
-        0x2: ('GroupName',stringify),
-        0x3: ('CreationTime',dateify),
-        0x4: ('LastModTime',dateify),
-        0x5: ('LastAccTime',dateify),
-        0x6: ('ExpireTime',dateify),
-        0x7: ('ImageID',intify),
-        0x8: ('Level',shortify),
-        0x9: ('Flags',intify),
+        0x0: ('Ignored',null_de()),
+        0x1: ('GroupID',int_de()),
+        0x2: ('GroupName',string_de()),
+        0x3: ('CreationTime',date_de()),
+        0x4: ('LastModTime',date_de()),
+        0x5: ('LastAccTime',date_de()),
+        0x6: ('ExpireTime',date_de()),
+        0x7: ('ImageID',int_de()),
+        0x8: ('Level',short_de()),
+        0x9: ('Flags',int_de()),
         0xFFFF: (None,None),
         }
 
-    def __init__(self,kpdb):
-        super(GroupInfo,self).__init__(kpdb,GroupInfo.format)
+    def __init__(self,string):
+        super(GroupInfo,self).__init__(GroupInfo.format,string)
         return
     pass
 
@@ -253,108 +319,81 @@ Notes:
   '''
 
     format = {
-        0x0: ('Ignored',nullify),
-        0x1: ('UUID',asciiify),
-        0x2: ('GroupID',intify),
-        0x3: ('ImageID',intify),
-        0x4: ('Title',stringify),
-        0x5: ('URL',stringify),
-        0x6: ('Username',stringify),
-        0x7: ('Password',stringify),
-        0x8: ('Notes',stringify),
-        0x9: ('CreationTime',dateify),
-        0xA: ('LastModTime',dateify),
-        0xB: ('LastAccTime',dateify),
-        0xC: ('ExpirationTime',dateify),
-        0xD: ('BinaryDesc',stringify),
-        0xE: ('BinaryData',shunt),
+        0x0: ('Ignored',null_de()),
+        0x1: ('UUID',ascii_de()),
+        0x2: ('GroupID',int_de()),
+        0x3: ('ImageID',int_de()),
+        0x4: ('Title',string_de()),
+        0x5: ('URL',string_de()),
+        0x6: ('Username',string_de()),
+        0x7: ('Password',string_de()),
+        0x8: ('Notes',string_de()),
+        0x9: ('CreationTime',date_de()),
+        0xA: ('LastModTime',date_de()),
+        0xB: ('LastAccTime',date_de()),
+        0xC: ('ExpirationTime',date_de()),
+        0xD: ('BinaryDesc',string_de()),
+        0xE: ('BinaryData',shunt_de()),
         0xFFFF: (None,None),
         }
 
-    def __init__(self,kpdb):
-        super(EntryInfo,self).__init__(kpdb,EntryInfo.format)
+    def __init__(self,string):
+        super(EntryInfo,self).__init__(EntryInfo.format,string)
         return
 
     pass
 
-class Kpdb3file(object):
-
-    def __init__(self,filename,rw='r'):
-        fp = open(filename,rw)
-        self._buffer = fp.read()
-        self.index = 0
-        return
-
-    def payload(self,offset=124):
-        if self.index != offset:
-            raise 'Unexpected offset %d != %d'%(self.index,offset)
-        return self._buffer[offset:]
-
-    def set_payload(self,payload,offset=124):
-        if self.index != offset:
-            raise 'Unexpected offset %d != %d'%(self.index,offset)
-        self._buffer = self._buffer[:offset] + payload
-
-    def read(self,nbytes,typecode):
-        'Read next nbytes and return a type given by typecode'
-        import struct
-        typecode = '<'+typecode
-        string = self._buffer[self.index:self.index+nbytes]
-        self.index += nbytes
-        try:
-            value = struct.unpack(typecode,string)
-        except struct.error,err:
-            print err
-            print 'typecode="%s", nbytes=%d, calcsize=%d, string="%s"'%\
-                (typecode,nbytes,struct.calcsize(typecode),string)
-            raise
-        return value
-
-    def read32(self):
-        'Read the next 32 bits and return as a 32 bit unsigned int'
-        return self.read(4,"I")
-
-    def read16(self):
-        'Read the next 32 bits and return as a 32 bit unsigned int'
-        return self.read(2,"H")
-
-    pass
 
 class Database(object):
     '''
     Access a KeePass DB file of format v3
     '''
     
-    def __init__(self, filename, masterkey, rw='r'):
-        self.dbfile = Kpdb3file(filename, rw)
-
-        print 'reading header'
-        self.header = DBHDR(self.dbfile)
-        print "%s"%self.header
-
-        finalkey = self.final_key(masterkey)
-        payload = self.dbfile.payload()
-        payload = self.decrypt_payload(payload, finalkey)
-        self.dbfile.set_payload(payload)
-
+    def __init__(self, masterkey, filename = None):
+        self.masterkey = masterkey
+        if filename:
+            self.read(filename)
+            return
+        self.header = DBHDR()
         self.groups = []
+        self.entries = []
+        return
+
+    def read(self,filename):
+        fp = open(filename)
+        buf = fp.read()
+        fp.close()
+
+        headbuf = buf[:124]
+        self.header = DBHDR(headbuf)
+        self.groups = []
+        self.entries = []
+
+        payload = buf[124:]
+
+        self.finalkey = self.final_key(self.masterkey)
+        payload = self.decrypt_payload(payload, self.finalkey)
+
         ngroups = self.header.dwGroups
-        print 'reading %d groups'%ngroups
         while ngroups:
-            self.groups.append(GroupInfo(self.dbfile))
+            gi = GroupInfo(payload)
+            self.groups.append(gi)
+            length = len(gi)
+            print 'GroupInfo of length',length,'payload=',len(payload)
+            payload = payload[length:]
             ngroups -= 1
             continue
 
-        self.entries = []
         nentries = self.header.dwEntries
-        print 'reading %d entries'%nentries
         while nentries:
-            self.entries.append(EntryInfo(self.dbfile))
+            ei = EntryInfo(payload)
+            self.entries.append(ei)
+            payload = payload[len(ei):]
             nentries -= 1
             continue
         return
 
-    def final_key(self, masterkey):
+    def final_key(self,masterkey):
         'Munge masterkey into the final key for decryping payload.'
         from Crypto.Cipher import AES
         import hashlib
@@ -399,11 +438,24 @@ class Database(object):
         payload = payload[:len(payload)-extra]
         return payload
 
+    def encrypt_payload(self,payload,finalkey):
+        unimplemented
+        return
+
     def __str__(self):
         ret = [str(self.header)]
         ret += map(str,self.groups)
         ret += map(str,self.entries)
         return '\n'.join(ret)
+
+
+    def write(self,filename):
+        payload = self.encode_gi_and_ei()
+        payload = self.encrypt_payload(payload)
+        fp = open(filename,w)
+        fp.write(self.header.encode())
+        fp.write(payload)
+        fp.close()
 
     pass
 
