@@ -1,0 +1,49 @@
+Notes on KeePass file format v3 (as comes with KeyPass 1.x or KeyPassX).
+
+* Basics
+
+ * Retrain fingers, it's spelled kEEpass, not kEYpass.
+ * Header unencrypted, payload encrypted with a master key that gets
+   munged.
+ * Format partially documented in Docs/DbFormat.txt int the source.
+
+
+* Other work
+
+** rudi/shirou
+
+Japanese hacker: http://d.hatena.ne.jp/rudi/20101003/1286111011 has
+same idea, amazingly this post is from this month!
+
+He translates the necessary crypting as such:
+
+#+begin_src python
+# Header to parse
+header = parse_db (buffer)
+# Masterpass a sha256
+key = hashlib.sha256 (masterpass). digest ()
+ECB mode using a # seed_key create AES
+cipher = AES.new (header.seed_key, AES.MODE_ECB)
+The AES key to encrypt # seed_rot_n times
+for i in range (1, self.header.seed_rot_n):
+    key = self.cipher.encrypt (key)
+# Key to sha256
+finalkey = hashlib.sha256 (key). digest ()
+
+# Header a encription iv using AES CBC-mode and create a
+cipher = AES.new (finalkey, AES.MODE_CBC, header.enc_iv)
+# Decrypt
+buf = cipher.decrypt (buf)
+# Get the character code of the last letter
+extra = ord (buf [-1])
+# Cut only a few minutes of the character code
+buf = buf [: len (buf)-extra] # last len (extra) becomes blank
+#+end_src
+
+He points to http://github.com/shirou/kptool
+
+** Paul Seamons 
+
+Perl hacker:
+
+http://search.cpan.org/~rhandom/File-KeePass-0.01/lib/File/KeePass.pm
