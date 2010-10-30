@@ -10,7 +10,7 @@ except ImportError:
 
 filename = sys.argv[1]
 masterkey  = sys.argv[2]
-db = kpdb.Database(filename,masterkey)
+db = kpdb.Database(masterkey,filename)
 
 db.header.dwGroups = 0
 db.header.dwEntries = 0
@@ -22,5 +22,5 @@ print 'Writing:',filename2
 fp = open(filename2,"w")
 fp.write(buf)
 fp.close()
-db2 = kpdb.Database(filename2,masterkey)
+db2 = kpdb.Database(masterkey,filename2)
 print db2

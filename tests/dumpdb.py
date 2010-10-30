@@ -11,5 +11,5 @@ except ImportError:
 
 filename = sys.argv[1]
 masterkey  = sys.argv[2]
-db = kpdb.Database(masterkey,filename)
+db = kpdb.Database(filename,masterkey)
 print db
