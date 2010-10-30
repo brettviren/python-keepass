@@ -1,8 +1,5 @@
 keepassc and python-keepass
 
-(Note, if you are viewing this README.org file on github you may want
-to look at http://github.com/brettviren/python-keepass/tree/master/README.html)
-
 This provides command line and Python interfaces for operating on
 files in KeePass format v3 (used by KeePass 1.x, and KeePassX).
 
