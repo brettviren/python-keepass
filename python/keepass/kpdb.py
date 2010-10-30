@@ -34,6 +34,7 @@ class Database(object):
         return
 
     def read(self,filename):
+        'Read in given .kdb file'
         fp = open(filename)
         buf = fp.read()
         fp.close()
