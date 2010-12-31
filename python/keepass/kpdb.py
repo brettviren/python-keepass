@@ -160,6 +160,9 @@ class Database(object):
         '''
         import hashlib
 
+        self.header.ngroups = len(self.groups)
+        self.header.nentries = len(self.entries)
+
         header = DBHDR(self.header.encode())
 
         # fixme: should regenerate encryption_iv, master_seed,
@@ -184,6 +187,7 @@ class Database(object):
         return
 
     def group(self,field,value):
+        'Return the group which has the given field and value'
         for group in self.groups:
             if group.__dict__[field] == value: return group
             continue
@@ -204,5 +208,118 @@ class Database(object):
             continue
         return
 
+    def hierarchy(self):
+        '''Return database with groups and entries organized into a
+        hierarchy'''
+        from hier import Node
+
+        top = Node()
+        breadcrumb = [top]
+        node_by_id = {None:top}
+        for group in self.groups:
+            n = Node(group)
+            node_by_id[group.groupid] = n
+
+            #print group.group_name,group.level,group.groupid,breadcrumb[-1].level()
+
+            while group.level - breadcrumb[-1].level() != 1:
+                pn = breadcrumb.pop()
+                #print '\tpopped node:',pn.name()
+                continue
+
+            breadcrumb[-1].nodes.append(n)
+            breadcrumb.append(n)
+            continue
+
+        for ent in self.entries:
+            n = node_by_id[ent.groupid]
+            n.entries.append(ent)
+
+        return top
+
+    def update(self,hierarchy):
+        '''
+        Update the database using the given hierarchy.  
+        This replaces the existing groups and entries.
+        '''
+        import hier
+        collector = hier.CollectVisitor()
+        hierarchy.walk(collector)
+        self.update(collector.groups,collector.entries)
+        return
+
+    def update(self,groups,entries):
+        '''
+        Update the database using the given groups and entries.  This
+        replaces the existing groups and entries.
+        '''
+        self.groups = groups
+        self.entries = entries
+        return
+
+    def add_entry(self,path,title,username,password,url="",note="",imigid=1,append=True):
+        '''
+        Add an entry to the current database at with given values.  If
+        append is False a pre-existing entry that matches path, title
+        and username will be overwritten with the new one.
+        '''
+        import hier, infoblocks
+
+        if ininstance(path,string):
+            path = path.split('/')
+        pathlen = len(path)
+
+        h = self.hierarchy()
+        visitor = hier.PathVisitor(path)
+        group = h.walk(visitor)
+
+        # fixme, this should move into a hier.Node.mkdir() method
+        if not group:           # make intermediate folders
+            group = visitor.best_match
+            node = h.node_with_group(group)
+            pathlen -= len(visitor.path)
+            for group_name in visitor.path:
+                # fixme, this should be moved into a new constructor
+                new_group = infoblocks.GroupInfo()
+                new_group.groupid = self.gen_groupid() # <--- need
+                new_group.group_name = group_name
+                new_group.imageid = 1
+                new_group.level = pathlen
+                pathlen += 1
+
+                new_node = Node(new_group)
+                node.nodes.append(new_node)
+
+                node = new_node
+                group = new_group
+                continue
+            pass
+
+        # fixme, this should probably be moved into a new constructor
+        def make_entry()
+            new_entry = infoblocks.EntryItem()
+            new_entry.uuid = self.gen_uuid() # <--- need
+            new_entry.groupid = group.groupid
+            new_entry.imageid = imageid
+            new_entry.title = title
+            new_entry.url = url
+            new_entry.username = username
+            new_entry.password = password
+            new_entry.notes = notes
+            #fixme, deal with times
+            return new_entry
+
+        if append:
+            self.entries.append(make_entry())
+            return
+
+        for ent in group.entries:
+            if ent.title != title: continue
+            if ent.username != username: continue
+            ent = make_entry()
+            return
+
+        self.entries.append(make_entry())
+        
     pass
 

@@ -169,6 +169,11 @@ Notes:
     def __init__(self,string):
         super(GroupInfo,self).__init__(GroupInfo.format,string)
         return
+
+    def name(self):
+        'Return the group_name'
+        return self.group_name
+
     pass
 
 class EntryInfo(InfoBase):
@@ -223,6 +228,10 @@ Notes:
     def __init__(self,string):
         super(EntryInfo,self).__init__(EntryInfo.format,string)
         return
+
+    def name(self):
+        'Return the title'
+        return self.title
 
     pass
 

@@ -13,6 +13,7 @@ class Cli(object):
         'open',                 # open and decrypt a file
         'save',                 # save current DB to file
         'dump',                 # dump current DB to text
+        'entry',                # add an entry
         ]
 
     def __init__(self,args=None):
@@ -158,7 +159,47 @@ class Cli(object):
         'Print the current database in a formatted way.'
         opts,files = self.ops['dump'].parse_args(opts)
         self.db.dump_entries(opts.format,opts.show_passwords)
-    
+        return
+        
+    def _entry_op(self):
+        'entry [options] username [password]'
+        from optparse import OptionParser
+        op = OptionParser(usage=self._entry_op.__doc__,add_help_option=False)
+        op.add_option('-p','--path',type='string',default='/',
+                      help='Set folder path in which to store this entry')
+        op.add_option('-t','--title',type='string',default="",
+                      help='Set the title for the entry, defaults to username')
+        op.add_option('-u','--url',type='string',default="",
+                      help='Set a URL for the entry')
+        op.add_option('-n','--note',type='string',default="",
+                      help='Set a note for the entry')
+        op.add_option('-i','--imageid',type='int',default=1,
+                      help='Set the image ID number for the entry')
+        op.add_option('-a','--append',action='store_true',default=False,
+                      help='The entry will be appended instead of overriding matching entry')
+        return op
+
+    def _entry(self,opts):
+        'Add an entry into the database'
+        import getpass
+        opts,args = self.ops['entry'].parse_args(opts)
+        username = args[0]
+        try:
+            password = args[1]
+        except:
+            password1 = password2 = None
+            while True
+                password1 = getpass.getpass()
+                password2 = getpass.getpass()
+                if psasword1 != password2: 
+                    sys.stderr.write("Error: Your passwords didn't math\n")
+                    continue
+                break
+            pass
+
+        self.db.add_entry(opts.path,opts.title or username,username,password,
+                          opts.url,opts.note,opts.imigid,opts.append)
+        return
 
 if '__main__' == __name__:
     import sys

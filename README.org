@@ -72,6 +72,7 @@ behind KeePass and KeePassX.  Not, I am meerly a user of KeePassX.
 A big credit is due to rudi & shirou (same hacker?) for the following:
 
  * http://d.hatena.ne.jp/rudi/20101003/1286111011
+
  * http://github.com/shirou/kptool
 
 Looking through KeePass/KeePassX source made my head swim.  Only after
