@@ -257,6 +257,14 @@ class Database(object):
         self.entries = entries
         return
 
+    def gen_uuid(self):
+        "Generate 16 bytes of randomness suitable for an entry's UUID"
+        return 4                # only call once
+
+    def gen_groupid(self):
+        "Generate 4 bytes of randomness suitable for a group's unique group id"
+        return 4                # only call once
+
     def add_entry(self,path,title,username,password,url="",note="",imigid=1,append=True):
         '''
         Add an entry to the current database at with given values.  If
@@ -281,7 +289,7 @@ class Database(object):
             for group_name in visitor.path:
                 # fixme, this should be moved into a new constructor
                 new_group = infoblocks.GroupInfo()
-                new_group.groupid = self.gen_groupid() # <--- need
+                new_group.groupid = self.gen_groupid()
                 new_group.group_name = group_name
                 new_group.imageid = 1
                 new_group.level = pathlen
@@ -298,7 +306,7 @@ class Database(object):
         # fixme, this should probably be moved into a new constructor
         def make_entry()
             new_entry = infoblocks.EntryItem()
-            new_entry.uuid = self.gen_uuid() # <--- need
+            new_entry.uuid = self.gen_uuid()
             new_entry.groupid = group.groupid
             new_entry.imageid = imageid
             new_entry.title = title
