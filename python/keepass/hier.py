@@ -255,7 +255,9 @@ class Node(object):
             continue
         return None
 
-    
+    pass
+
+
 def visit(node,visitor):
     '''
     Depth-first descent into the group/entry hierarchy.

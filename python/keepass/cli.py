@@ -176,7 +176,8 @@ class Cli(object):
         if not self.hier:
             sys.stderr.write('Can not dump.  No database open.\n')
             return
-        self.hier.dump(opts.format,opts.show_passwords)
+        print self.hier
+        #self.hier.dump(opts.format,opts.show_passwords)
         return
         
     def _entry_op(self):
