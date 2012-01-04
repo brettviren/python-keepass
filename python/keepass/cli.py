@@ -210,8 +210,8 @@ class Cli(object):
             while True:
                 password1 = getpass.getpass()
                 password2 = getpass.getpass()
-                if psasword1 != password2: 
-                    sys.stderr.write("Error: Your passwords didn't math\n")
+                if password1 != password2: 
+                    sys.stderr.write("Error: Your passwords didn't match\n")
                     continue
                 break
             pass

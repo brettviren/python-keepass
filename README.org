@@ -22,6 +22,17 @@ and correctness limitations:
    files written by KeePass/KeePassX until you are assured that files
    written by this code are usable.
 
+ * Key files are not currently supported
+
+* Prerequisites 
+
+You will need to install the python-crypto package (providing the
+"Crypto" module).  On a well behaved system do:
+
+#+begin_src shell
+sudo apt-get install python-crypto
+#+end_src
+
 * Command line
 
 The command line interface is run like:

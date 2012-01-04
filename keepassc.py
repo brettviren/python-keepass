@@ -2,6 +2,7 @@
 
 
 import sys
+sys.path.append("./python")
 
 from keepass import cli
 
