@@ -2,6 +2,7 @@
 '''
 Command line interface to manipulating keepass files
 '''
+import sys
 
 class Cli(object):
     '''
@@ -18,6 +19,7 @@ class Cli(object):
 
     def __init__(self,args=None):
         self.db = None
+        self.hier = None
         self.command_line = None
         self.ops = {}
         if args: self.parse_args(args)
@@ -81,6 +83,12 @@ class Cli(object):
         '''
         keepassc [options] [cmd cmd_options] ...
         
+        Example: open, dump to screen and save
+
+        keepassc open -m "My Secret" input.kpdb \
+                 dump -f '"%(title)s" "%(username)s" %(url)s' \
+                 save -m "New Secret" output.kpdb
+
         execute "help" command for more information.
         '''
         from optparse import OptionParser
@@ -127,7 +135,13 @@ class Cli(object):
         opts,files = self.ops['open'].parse_args(opts)
         import kpdb
         # fixme - add support for openning/merging multiple DBs!
+        try:
+            dbfile = files[0]
+        except IndexError:
+            print "No database file specified"
+            sys.exit(1)
         self.db = kpdb.Database(files[0],opts.masterkey)
+        self.hier = self.db.hierarchy()
         return
 
     def _save_op(self):
@@ -141,6 +155,7 @@ class Cli(object):
     def _save(self,opts):
         'Save the current in-memory database to a file'
         opts,files = self.ops['save'].parse_args(opts)
+        self.db.update(self.hier)
         self.db.write(files[0],opts.masterkey)
         return
 
@@ -158,7 +173,10 @@ class Cli(object):
     def _dump(self,opts):
         'Print the current database in a formatted way.'
         opts,files = self.ops['dump'].parse_args(opts)
-        self.db.dump_entries(opts.format,opts.show_passwords)
+        if not self.hier:
+            sys.stderr.write('Can not dump.  No database open.\n')
+            return
+        self.hier.dump(opts.format,opts.show_passwords)
         return
         
     def _entry_op(self):
@@ -188,7 +206,7 @@ class Cli(object):
             password = args[1]
         except:
             password1 = password2 = None
-            while True
+            while True:
                 password1 = getpass.getpass()
                 password2 = getpass.getpass()
                 if psasword1 != password2: 
@@ -198,10 +216,9 @@ class Cli(object):
             pass
 
         self.db.add_entry(opts.path,opts.title or username,username,password,
-                          opts.url,opts.note,opts.imigid,opts.append)
+                          opts.url,opts.note,opts.imageid,opts.append)
         return
 
 if '__main__' == __name__:
-    import sys
     cliobj = Cli(sys.argv[1:])
     cliobj()

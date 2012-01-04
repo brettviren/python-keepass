@@ -166,7 +166,7 @@ Notes:
         0xFFFF: (None,None),
         }
 
-    def __init__(self,string):
+    def __init__(self,string=None):
         super(GroupInfo,self).__init__(GroupInfo.format,string)
         return
 
@@ -225,7 +225,7 @@ Notes:
         0xFFFF: (None,None),
         }
 
-    def __init__(self,string):
+    def __init__(self,string=None):
         super(EntryInfo,self).__init__(EntryInfo.format,string)
         return
 

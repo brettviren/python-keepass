@@ -12,7 +12,7 @@ General structure:
 
 '''
 
-import struct
+import sys, struct
 
 from header import DBHDR
 from infoblock import GroupInfo, EntryInfo
@@ -196,7 +196,11 @@ class Database(object):
     def dump_entries(self,format,show_passwords=False):
         for ent in self.entries:
             group = self.group('groupid',ent.groupid)
-            dat = dict(ent.__dict__)
+            if not group:
+                sys.stderr.write("Skipping missing group with ID %d\n"%
+                                 ent.groupid)
+                continue
+            dat = dict(ent.__dict__) # copy
             if not show_passwords:
                 dat['password'] = '****'
             for what in ['group_name','level']:
@@ -244,7 +248,7 @@ class Database(object):
         '''
         import hier
         collector = hier.CollectVisitor()
-        hierarchy.walk(collector)
+        hierarchy.visit(collector)
         self.update(collector.groups,collector.entries)
         return
 
@@ -265,47 +269,20 @@ class Database(object):
         "Generate 4 bytes of randomness suitable for a group's unique group id"
         return 4                # only call once
 
-    def add_entry(self,path,title,username,password,url="",note="",imigid=1,append=True):
+    def add_entry(self,path,title,username,password,url="",notes="",imageid=1,append=True):
         '''
         Add an entry to the current database at with given values.  If
         append is False a pre-existing entry that matches path, title
         and username will be overwritten with the new one.
         '''
-        import hier, infoblocks
+        import hier, infoblock
 
-        if ininstance(path,string):
-            path = path.split('/')
-        pathlen = len(path)
-
-        h = self.hierarchy()
-        visitor = hier.PathVisitor(path)
-        group = h.walk(visitor)
-
-        # fixme, this should move into a hier.Node.mkdir() method
-        if not group:           # make intermediate folders
-            group = visitor.best_match
-            node = h.node_with_group(group)
-            pathlen -= len(visitor.path)
-            for group_name in visitor.path:
-                # fixme, this should be moved into a new constructor
-                new_group = infoblocks.GroupInfo()
-                new_group.groupid = self.gen_groupid()
-                new_group.group_name = group_name
-                new_group.imageid = 1
-                new_group.level = pathlen
-                pathlen += 1
-
-                new_node = Node(new_group)
-                node.nodes.append(new_node)
-
-                node = new_node
-                group = new_group
-                continue
-            pass
+        top = self.hierarchy()
+        node = hier.mkdir(top,path)
 
         # fixme, this should probably be moved into a new constructor
-        def make_entry()
-            new_entry = infoblocks.EntryItem()
+        def make_entry():
+            new_entry = infoblock.EntryInfo()
             new_entry.uuid = self.gen_uuid()
             new_entry.groupid = group.groupid
             new_entry.imageid = imageid
@@ -321,7 +298,7 @@ class Database(object):
             self.entries.append(make_entry())
             return
 
-        for ent in group.entries:
+        for ent in self.entries:
             if ent.title != title: continue
             if ent.username != username: continue
             ent = make_entry()
