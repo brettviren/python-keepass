@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+from keepasslib import cli
+
+
+def main(args):
+    cliobj = cli.Cli(args)
+    cliobj()
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])

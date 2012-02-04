@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 '''
 KeePass v1 database file from Docs/DbFormat.txt of KeePass v1.
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 '''
 Classes and functions for the GroupInfo and EntryInfo blocks of a keepass file
