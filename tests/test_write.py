@@ -1,13 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys,os
-try:
-    from keepass import kpdb
-except ImportError:
-    path = os.path.dirname(os.path.dirname(__file__))
-    path = os.path.join('python')
-    sys.path.append(path)
-    from keepass import kpdb
+from keepasslib import kpdb
 
 filename = sys.argv[1]
 masterkey  = sys.argv[2]

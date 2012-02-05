@@ -1,20 +1,11 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys,os
-try:
-    from keepass import hier
-except ImportError:
-    path = os.path.dirname(os.path.dirname(__file__))
-    path = os.path.join('python')
-    sys.path.append(path)
-    from keepass import hier
+from keepasslib import hier
 
 top = hier.Node()
 hier.mkdir(top,'SubDir/SubSubDir')
 dumper = hier.NodeDumper()
 hier.walk(top,dumper)
-
 
 # filename = sys.argv[1]
 # masterkey  = sys.argv[2]
