@@ -1,4 +1,7 @@
 *~
 *.pyc
 *.pyo
-build/
+/build
+/dist
+/todo
+MANIFEST

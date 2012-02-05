@@ -1,0 +1,3 @@
+include setup.py
+include keepassc
+recursive-include keepasslib *.py
