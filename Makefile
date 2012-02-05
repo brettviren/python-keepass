@@ -10,6 +10,7 @@ PY_FILES:=\
 	setup.py \
 	keepassc \
 	keepasslib/__init__.py \
+	keepasslib/decorators.py \
 	keepasslib/header.py \
 	keepasslib/hier.py \
 	keepasslib/infoblock.py \

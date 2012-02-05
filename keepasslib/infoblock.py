@@ -58,7 +58,6 @@ class InfoBase(object):
         self.format = format
         self.order = []         # keep field order
         if string: self.decode(string)
-        return
 
     def __str__(self):
         ret = [self.__class__.__name__ + ':']
@@ -95,8 +94,6 @@ class InfoBase(object):
             #print '%s: type = %d[%d] -> %s buf = "%s" value = %s'%\
             #    (name,typ,siz,self.format[typ],buf,str(value))
             self.__dict__[name] = value
-            continue
-        return
 
     def __len__(self):
         length = 0
@@ -114,17 +111,12 @@ class InfoBase(object):
                 name,decenc = self.format[typ]
                 value = self.__dict__[name]
                 encoded = decenc[1](value)
-                pass
             buf = struct.pack('<H',typ)
             buf += struct.pack('<I',siz)
             if encoded is not None:
                 buf += struct.pack('<%ds'%siz,encoded)
             string += buf
-            continue
         return string
-
-    pass
-
 
 
 class GroupInfo(InfoBase):
@@ -168,13 +160,11 @@ Notes:
 
     def __init__(self,string=None):
         super(GroupInfo,self).__init__(GroupInfo.format,string)
-        return
 
     def name(self):
         'Return the group_name'
         return self.group_name
 
-    pass
 
 class EntryInfo(InfoBase):
     '''One entry: [FIELDTYPE(FT)][FIELDSIZE(FS)][FIELDDATA(FD)]
@@ -227,11 +217,7 @@ Notes:
 
     def __init__(self,string=None):
         super(EntryInfo,self).__init__(EntryInfo.format,string)
-        return
 
     def name(self):
         'Return the title'
         return self.title
-
-    pass
-

@@ -54,8 +54,8 @@ class DBHDR(object):
         ('contents_hash',32,'32s'),
         ('master_seed2',32,'32s'),
         ('key_enc_rounds',4,'I'),
-        ]
-    
+    ]
+
     signatures = (0x9AA2D903,0xB54BFB65)
     length = 124
 
@@ -65,21 +65,18 @@ class DBHDR(object):
         ('AES',2),
         ('ArcFour',4),
         ('TwoFish',8),
-        )
+    )
 
     def __init__(self,buf=None):
         'Create a header, read self from binary string if given'
         if buf: self.decode(buf)
-        return
 
     def __str__(self):
         ret = ['Header:']
         for field in DBHDR.format:
+            # field is a tuple (name, size, type)
             name = field[0]
-            size = field[1]
-            typ = field[2]
             ret.append('\t%s %s'%(name,self.__dict__[name]))
-            continue
         return '\n'.join(ret)
 
     def encryption_type(self):
@@ -90,38 +87,27 @@ class DBHDR(object):
     def encode(self):
         'Provide binary string representation'
         import struct
-
         ret = ""
-
         for field in DBHDR.format:
             name,bytes,typecode = field
             value = self.__dict__[name]
             buf = struct.pack('<'+typecode,value)
             ret += buf
-            continue
         return ret
 
     def decode(self,buf):
         'Fill self from binary string.'
         import struct
-
         index = 0
-
         for field in DBHDR.format:
             name,nbytes,typecode = field
             string = buf[index:index+nbytes]
             index += nbytes
             value = struct.unpack('<'+typecode, string)[0]
             self.__dict__[name] = value
-            continue
-
         if DBHDR.signatures[0] != self.signature1 or \
                 DBHDR.signatures[1] != self.signature2:
             msg = 'Bad sigs:\n%s %s\n%s %s'%\
                 (DBHDR.signatures[0],DBHDR.signatures[1],
                  self.signature1,self.signature2)
             raise IOError,msg
-
-        return
-
-    pass                        # DBHDR

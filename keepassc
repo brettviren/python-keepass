@@ -25,7 +25,6 @@ class Cli(object):
         self.command_line = None
         self.ops = {}
         if args: self.parse_args(args)
-        return
 
     def parse_args(self,args):
         '''
@@ -59,16 +58,11 @@ class Cli(object):
         while copy:
             chunk = splitopts(copy)
             if not chunk: break
-
             if not chunk[0]: chunk[0] = 'general'
             meth = eval('self._%s_op'%chunk[0])
             self.ops[chunk[0]] = meth()
             cmdline.append(chunk)
-            continue
-
         self.command_line = cmdline
-
-        return
 
     def __call__(self):
         'Process commands'
@@ -78,8 +72,6 @@ class Cli(object):
         for cmd,cmdopts in self.command_line:
             meth = eval('self._%s'%cmd)
             meth(cmdopts)
-            continue
-        return
 
     def _general_op(self):
         '''
@@ -94,27 +86,22 @@ class Cli(object):
         execute "help" command for more information.
         '''
         from optparse import OptionParser
-        op = OptionParser(usage=self._general_op.__doc__)
-        return op
+        return OptionParser(usage=self._general_op.__doc__)
 
     def _general(self,opts):
         'Process general options'
         opts,args = self.ops['general'].parse_args(opts)
-        return
-
 
     def _help_op(self):
-        return None
+        pass
+
     def _help(self,opts):
         'Print some helpful information'
-
         print 'Available commands:'
         for cmd in Cli.commands:
             meth = eval('self._%s'%cmd)
             print '\t%s: %s'%(cmd,meth.__doc__)
-            continue
         print '\nPer-command help:\n'
-
         for cmd in Cli.commands:
             meth = eval('self._%s_op'%cmd)
             op = meth()
@@ -122,7 +109,6 @@ class Cli(object):
             print '%s'%cmd.upper()
             op.print_help()
             print
-            continue
 
     def _open_op(self):
         'open [options] filename'
@@ -144,7 +130,6 @@ class Cli(object):
             sys.exit(1)
         self.db = kpdb.Database(files[0],opts.masterkey)
         self.hier = self.db.hierarchy()
-        return
 
     def _save_op(self):
         'save [options] filename'
@@ -159,7 +144,6 @@ class Cli(object):
         opts,files = self.ops['save'].parse_args(opts)
         self.db.update(self.hier)
         self.db.write(files[0],opts.masterkey)
-        return
 
     def _dump_op(self):
         'dump [options] [name|/group/name]'
@@ -180,8 +164,7 @@ class Cli(object):
             return
         print self.hier
         #self.hier.dump(opts.format,opts.show_passwords)
-        return
-        
+
     def _entry_op(self):
         'entry [options] username [password]'
         from optparse import OptionParser
@@ -216,11 +199,8 @@ class Cli(object):
                     sys.stderr.write("Error: Your passwords didn't match\n")
                     continue
                 break
-            pass
-
         self.db.add_entry(opts.path,opts.title or username,username,password,
                           opts.url,opts.note,opts.imageid,opts.append)
-        return
 
 
 def main(args):

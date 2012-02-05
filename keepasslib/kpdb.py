@@ -12,10 +12,11 @@ General structure:
 
 '''
 
-import sys, struct
+import sys
+import hashlib
 
-from header import DBHDR
-from infoblock import GroupInfo, EntryInfo
+from .header import DBHDR
+from .infoblock import GroupInfo, EntryInfo
 
 
 class Database(object):
@@ -31,7 +32,6 @@ class Database(object):
         self.header = DBHDR()
         self.groups = []
         self.entries = []
-        return
 
     def read(self,filename):
         'Read in given .kdb file'
@@ -62,7 +62,6 @@ class Database(object):
             #print 'GroupInfo of length',length,'payload=',len(payload)
             payload = payload[length:]
             ngroups -= 1
-            continue
 
         nentries = self.header.nentries
         while nentries:
@@ -70,23 +69,19 @@ class Database(object):
             self.entries.append(ei)
             payload = payload[len(ei):]
             nentries -= 1
-            continue
-        return
 
     def final_key(self,masterkey,masterseed,masterseed2,rounds):
         '''Munge masterkey into the final key for decryping payload by
         encrypting it for the given number of rounds masterseed2 and
         hashing it with masterseed.'''
         from Crypto.Cipher import AES
-        import hashlib
 
         key = hashlib.sha256(masterkey).digest()
         cipher = AES.new(masterseed2,  AES.MODE_ECB)
-        
+
         while rounds:
             rounds -= 1
             key = cipher.encrypt(key)
-            continue
         key = hashlib.sha256(key).digest()
         return hashlib.sha256(masterseed + key).digest()
 
@@ -102,7 +97,6 @@ class Database(object):
         if ((crypto_size > 2147483446) or (not crypto_size and self.header.ngroups)):
             raise ValueError, "Decryption failed.\nThe key is wrong or the file is damaged"
 
-        import hashlib
         if self.header.contents_hash != hashlib.sha256(payload).digest():
             raise ValueError, "Decryption failed. The file checksum did not match."
 
@@ -137,7 +131,7 @@ class Database(object):
         for ind in range(padding):
             payload += chr(padding)
         return cipher.encrypt(payload)
-        
+
     def __str__(self):
         ret = [str(self.header)]
         ret += map(str,self.groups)
@@ -158,8 +152,6 @@ class Database(object):
         Write out DB to given filename with optional master key.
         If no master key is given, the one used to create this DB is used.
         '''
-        import hashlib
-
         self.header.ngroups = len(self.groups)
         self.header.nentries = len(self.entries)
 
@@ -184,14 +176,11 @@ class Database(object):
         fp.write(header.encode())
         fp.write(payload)
         fp.close()
-        return
 
     def group(self,field,value):
         'Return the group which has the given field and value'
         for group in self.groups:
             if group.__dict__[field] == value: return group
-            continue
-        return None
 
     def dump_entries(self,format,show_passwords=False):
         for ent in self.entries:
@@ -209,13 +198,11 @@ class Database(object):
                 dat[nick] = group.__dict__[what]
 
             print format%dat
-            continue
-        return
 
     def hierarchy(self):
         '''Return database with groups and entries organized into a
         hierarchy'''
-        from hier import Node
+        from .hier import Node
 
         top = Node()
         breadcrumb = [top]
@@ -224,16 +211,11 @@ class Database(object):
             n = Node(group)
             node_by_id[group.groupid] = n
 
-            #print group.group_name,group.level,group.groupid,breadcrumb[-1].level()
-
             while group.level - breadcrumb[-1].level() != 1:
-                pn = breadcrumb.pop()
-                #print '\tpopped node:',pn.name()
-                continue
+                breadcrumb.pop()
 
             breadcrumb[-1].nodes.append(n)
             breadcrumb.append(n)
-            continue
 
         for ent in self.entries:
             n = node_by_id[ent.groupid]
@@ -246,20 +228,11 @@ class Database(object):
         Update the database using the given hierarchy.  
         This replaces the existing groups and entries.
         '''
-        import hier
-        collector = hier.CollectVisitor()
+        from .hier import CollectVisitor
+        collector = CollectVisitor()
         hierarchy.visit(collector)
-        self.update(collector.groups,collector.entries)
-        return
-
-    def update(self,groups,entries):
-        '''
-        Update the database using the given groups and entries.  This
-        replaces the existing groups and entries.
-        '''
-        self.groups = groups
-        self.entries = entries
-        return
+        self.groups = collector.groups
+        self.entries = collector.entries
 
     def gen_uuid(self):
         "Generate 16 bytes of randomness suitable for an entry's UUID"
@@ -275,7 +248,7 @@ class Database(object):
         append is False a pre-existing entry that matches path, title
         and username will be overwritten with the new one.
         '''
-        import hier, infoblock
+        from . import hier, infoblock
 
         top = self.hierarchy()
         node = hier.mkdir(top,path)
@@ -284,7 +257,7 @@ class Database(object):
         def make_entry():
             new_entry = infoblock.EntryInfo()
             new_entry.uuid = self.gen_uuid()
-            new_entry.groupid = group.groupid
+            new_entry.groupid = node.groupid
             new_entry.imageid = imageid
             new_entry.title = title
             new_entry.url = url
@@ -303,8 +276,5 @@ class Database(object):
             if ent.username != username: continue
             ent = make_entry()
             return
-
         self.entries.append(make_entry())
-        
-    pass
 

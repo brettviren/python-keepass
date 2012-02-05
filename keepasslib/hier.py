@@ -3,6 +3,8 @@
 Classes to construct a hiearchy holding infoblocks.
 '''
 
+from .decorators import notimplemented
+
 def path2list(path):
     '''
     Maybe convert a '/' separated string into a list.
@@ -11,8 +13,8 @@ def path2list(path):
         path = path.split('/')
         if path[-1] == '': path.pop() # remove trailing '/'
         return path
-
     return list(path)           # make copy
+
 
 class Visitor(object):
     '''
@@ -32,10 +34,10 @@ class Visitor(object):
     descent.  This can be used to avoid sub trees that are not
     interesting to the visitor.
     '''
+    @notimplemented
     def __call__(self):
-        notimplemented
+        pass
 
-    pass
 
 class Walker(object):
     '''
@@ -46,9 +48,10 @@ class Walker(object):
     If bail is True, then drop the current node and move to its next
     sister.
     '''
+    @notimplemented
     def __call__(self,node):
-        notimplemented
-    pass
+        pass
+
 
 class NodeDumper(Walker):
     def __call__(self,node):
@@ -57,6 +60,7 @@ class NodeDumper(Walker):
             return
         print '  '*node.level*2,node.group.name(),node.group.groupid,\
             len(node.entries),len(node.nodes)
+
 
 class FindGroupNode(object):
     '''Return the node holding the group of the given name.  If name
@@ -67,7 +71,6 @@ class FindGroupNode(object):
         self.best_match = None
         self.path = path2list(path)
         print 'Finding path',path
-        return
 
     def __call__(self,node):
         if not self.path: 
@@ -80,12 +83,10 @@ class FindGroupNode(object):
             return (None,None)
 
         top_name = self.path[0]
-        obj_name = group.name()
+        obj_name = node.group.name()
 
         groupid = node.group.groupid
         print self.path,obj_name,groupid
-
-        from infoblock import GroupInfo
 
         if top_name != obj_name:
             print top_name,'!=',obj_name
@@ -99,7 +100,6 @@ class FindGroupNode(object):
             else:                # might have a matching sister
                 self._collected.append(node)
                 return (None,None)
-            pass
 
         self.path.pop(0)
         return (None,None)  # keep going
@@ -114,17 +114,16 @@ class CollectVisitor(Visitor):
     def __init__(self):
         self.groups = []
         self.entries = []
-        return
 
-    def __call__(self,g_or_e):
-        if g_or_e is None: return (None,None)
+    def __call__(self, g_or_e):
+        if g_or_e is None:
+            return (None,None)
         from infoblock import GroupInfo
-        if isinstance(g_or_e,GroupInfo):
+        if isinstance(g_or_e, GroupInfo):
             self.groups.append(g_or_e)
         else:
             self.entries.append(g_or_e)
         return (None,None)
-    pass
 
 
 class PathVisitor(Visitor):
@@ -154,7 +153,6 @@ class PathVisitor(Visitor):
         self.best_match = None
         self.stop_on_first = stop_on_first
         self.path = path2list(path)
-        return
 
     def results(self): 
         'Return a list of the matched groups or entries'
@@ -166,10 +164,6 @@ class PathVisitor(Visitor):
         top_name = self.path[0] or "None"
         obj_name = "None"
         if g_or_e: obj_name = g_or_e.name()
-
-        groupid = None
-        if g_or_e: groupid = g_or_e.groupid
-        #print self.path,obj_name,groupid
 
         from infoblock import GroupInfo
 
@@ -187,7 +181,6 @@ class PathVisitor(Visitor):
             else:                  # might have a matching sister
                 self._collected.append(g_or_e)
                 return (None,None)
-            pass
 
         self.path.pop(0)
         return (None,None)  # keep going
@@ -195,7 +188,7 @@ class PathVisitor(Visitor):
 
 class Node(object):
     '''
-    A node in the group hiearchy.  
+    A node in the group hiearchy.
 
     This basically associates entries to their group
 
@@ -210,7 +203,6 @@ class Node(object):
         self.group = group
         self.nodes = nodes or list()
         self.entries = entries or list()
-        return
 
     def level(self):
         'Return the level of the group or -1 if have no group'
@@ -223,7 +215,6 @@ class Node(object):
     def name(self):
         'Return name of group or None if no group'
         if self.group: return self.group.group_name
-        return None
 
     def pretty(self,depth=0):
         'Pretty print this Node and its contents'
@@ -251,11 +242,8 @@ class Node(object):
             return self
         for child in self.nodes:
             ret = child.node_with_group(group)
-            if ret: return ret
-            continue
-        return None
-
-    pass
+            if ret:
+                return ret
 
 
 def visit(node,visitor):
@@ -273,15 +261,14 @@ def visit(node,visitor):
     
     for n in node.nodes:
         val = visit(n,visitor)
-        if val is not None: return val
-        continue
+        if val is not None:
+            return val
     
     for e in node.entries:
         val,bail = visitor(e)
-        if val is not None or bail: return val
-        continue
+        if val is not None or bail:
+            return val
 
-    return None
 
 def walk(node,walker):
     '''
@@ -295,14 +282,12 @@ def walk(node,walker):
     for sn in node.nodes:
         value,bail = walk(sn,walker)
         if value is not None: return value
-        continue
-    return None    
-    
+
 
 def groupid(top):
     'Return group ID unique to groups in nodes below top'
-    
-    
+    pass # XXX
+
 
 def mkdir(top,path):
     '''
@@ -323,22 +308,14 @@ def mkdir(top,path):
         node = fg.best_match
         pathlen -= len(fg.path)
         for group_name in fg.path:
-            # fixme, this should be moved into a new constructor
+            # XXX fixme, this should be moved into a new constructor
             new_group = infoblock.GroupInfo()
             new_group.groupid = top.gen_groupid()
             new_group.group_name = group_name
             new_group.imageid = 1
             new_group.level = pathlen
             pathlen += 1
-            
-            new_node = hier.Node(new_group)
+            new_node = Node(new_group)
             node.nodes.append(new_node)
-            
             node = new_node
-            group = new_group
-            continue
-        pass
     return node
-    
-
-    
