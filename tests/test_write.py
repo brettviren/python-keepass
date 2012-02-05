@@ -1,21 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import sys,os
+import unittest
 from keepasslib import kpdb
+from . import get_resource
 
-filename = sys.argv[1]
-masterkey  = sys.argv[2]
-db = kpdb.Database(masterkey,filename)
 
-db.header.dwGroups = 0
-db.header.dwEntries = 0
-buf = db.header.encode()
+class TestWrite(unittest.TestCase):
 
-filename2 = os.path.splitext(filename)
-filename2 = filename2[0] + '2' + filename2[1]
-print 'Writing:',filename2
-fp = open(filename2,"w")
-fp.write(buf)
-fp.close()
-db2 = kpdb.Database(masterkey,filename2)
-print db2
+    def test_write(self):
+        filename = get_resource("test.kdb")
+        masterkey  = "test"
+        db = kpdb.Database(filename, masterkey)
+        db.header.dwGroups = 0
+        db.header.dwEntries = 0
+        buf = db.header.encode()
+        filename2 = get_resource("test2.kdb")
+        fp = open(filename2, "wb")
+        try:
+            fp.write(buf)
+        finally:
+            fp.close()
+        print kpdb.Database(filename2, masterkey)

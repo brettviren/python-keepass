@@ -2,10 +2,15 @@
 PYVER:=2.7
 PYTHON:=python$(PYVER)
 ifeq ($(shell uname),Darwin)
+  NOSETESTS:=/usr/local/share/python/nosetests
+  NUMPROCESSORS:=$(shell sysctl -a | grep machdep.cpu.core_count | cut -d " " -f 2)
   CHMODMINUSMINUS:=
 else
+  NOSETESTS:=$(shell which nosetests)
+  NUMPROCESSORS:=$(shell grep -c processor /proc/cpuinfo)
   CHMODMINUSMINUS:=--
 endif
+
 PY_FILES:=\
 	setup.py \
 	keepassc \
@@ -45,6 +50,7 @@ pyflakes:
 	pyflakes $(PY_FILES)
 
 test:
-	./test.sh
+	$(PYTHON) $(NOSETESTS) --processes=$(NUMPROCESSORS) \
+	  -v -m "^test_.*" $(TESTOPTS) $(TESTS)
 
 .PHONY: dist chmod check pyflakes doccheck test
