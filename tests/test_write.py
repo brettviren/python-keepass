@@ -9,7 +9,7 @@ class TestWrite(unittest.TestCase):
 
     def test_write(self):
         filename = get_resource("test.kdb")
-        masterkey  = "test"
+        masterkey = "test"
         db = kpdb.Database(filename, masterkey)
         db.header.dwGroups = 0
         db.header.dwEntries = 0
