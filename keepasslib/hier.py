@@ -7,13 +7,14 @@ from .decorators import notimplemented
 
 def path2list(path):
     '''
-    Maybe convert a '/' separated string into a list.
+    Convert a '/' separated string into a list.
     '''
-    if isinstance(path,str): 
-        path = path.split('/')
-        if path[-1] == '': path.pop() # remove trailing '/'
-        return path
-    return list(path)           # make copy
+    if isinstance(path, str):
+        # remove trailing '/'
+        if path.endswith('/'):
+            path = path[:-1]
+        return path.split('/')
+    return list(path)
 
 
 class Visitor(object):
@@ -54,15 +55,17 @@ class Walker(object):
 
 
 class NodeDumper(Walker):
+
     def __call__(self,node):
         if not node.group:
             print 'Top'
-            return
+            return (None, None)
         print '  '*node.level*2,node.group.name(),node.group.groupid,\
             len(node.entries),len(node.nodes)
+        return (None, None)
 
 
-class FindGroupNode(object):
+class FindGroupNode(Walker):
     '''Return the node holding the group of the given name.  If name
     has any slashes it will be interpreted as a path ending in that
     group'''
@@ -201,12 +204,17 @@ class Node(object):
 
     def __init__(self,group=None,entries=None,nodes=None):
         self.group = group
-        self.nodes = nodes or list()
-        self.entries = entries or list()
+        if nodes is None:
+            nodes = []
+        self.nodes = nodes
+        if entries is None:
+            entries = []
+        self.entries = entries
 
     def level(self):
         'Return the level of the group or -1 if have no group'
-        if self.group: return self.group.level
+        if self.group:
+            return self.group.level
         return -1
 
     def __str__(self):
@@ -214,26 +222,20 @@ class Node(object):
 
     def name(self):
         'Return name of group or None if no group'
-        if self.group: return self.group.group_name
+        if self.group:
+            return self.group.group_name
 
     def pretty(self,depth=0):
         'Pretty print this Node and its contents'
         tab = '  '*depth
-
-
         me = "%s%s (%d entries) (%d subnodes)\n"%\
             (tab,self.name(),len(self.entries),len(self.nodes))
-
-        children=[]
+        children = []
         for e in self.entries:
             s = "%s%s(%s: %s)\n"%(tab,tab,e.title,e.username)
             children.append(s)
-            continue
-
         for n in self.nodes:
             children.append(n.pretty(depth+1))
-            continue
-
         return me + ''.join(children)
 
     def node_with_group(self,group):
@@ -277,11 +279,13 @@ def walk(node,walker):
     See docstring for hier.Walker for information on the given visitor. 
     '''
     value,bail = walker(node)
-    if value is not None or bail: return value
+    if value is not None or bail:
+        return value
 
     for sn in node.nodes:
-        value,bail = walk(sn,walker)
-        if value is not None: return value
+        value = walk(sn,walker)
+        if value is not None:
+            return value
 
 
 def groupid(top):
@@ -289,7 +293,7 @@ def groupid(top):
     pass # XXX
 
 
-def mkdir(top,path):
+def mkdir(top, path):
     '''
     Starting at given top node make nodes and groups to satisfy the
     given path, where needed.  Return the node holding the leaf group.
@@ -301,16 +305,16 @@ def mkdir(top,path):
     print 'mkdir',path
 
     fg = FindGroupNode(path)
-    node = walk(top,fg)
+    node = walk(top, fg)
 
     if not node:                # make remaining intermediate folders
-        print 'Remaining folders to make:',fg.path
-        node = fg.best_match
+        print 'Remaining folders to make:', fg.path
+        node = fg.best_match or top
         pathlen -= len(fg.path)
         for group_name in fg.path:
             # XXX fixme, this should be moved into a new constructor
             new_group = infoblock.GroupInfo()
-            new_group.groupid = top.gen_groupid()
+            new_group.groupid = groupid(top)
             new_group.group_name = group_name
             new_group.imageid = 1
             new_group.level = pathlen

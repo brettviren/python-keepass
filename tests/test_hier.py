@@ -8,7 +8,7 @@ class TestHierarchy(unittest.TestCase):
         top = hier.Node()
         hier.mkdir(top,'SubDir/SubSubDir')
         dumper = hier.NodeDumper()
-        hier.walk(top,dumper)
+        hier.walk(top, dumper)
 
         # filename = sys.argv[1]
         # masterkey  = sys.argv[2]
