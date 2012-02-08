@@ -69,7 +69,8 @@ class DBHDR(object):
 
     def __init__(self,buf=None):
         'Create a header, read self from binary string if given'
-        if buf: self.decode(buf)
+        if buf:
+            self.decode(buf)
 
     def __str__(self):
         ret = ['Header:']
@@ -81,15 +82,15 @@ class DBHDR(object):
 
     def encryption_type(self):
         for encflag in DBHDR.encryption_flags[1:]:
-            if encflag[1] & self.flags: return encflag[0]
+            if encflag[1] & self.flags:
+                return encflag[0]
         return 'Unknown'
 
     def encode(self):
         'Provide binary string representation'
         import struct
         ret = ""
-        for field in DBHDR.format:
-            name,bytes,typecode = field
+        for name,bytes,typecode in DBHDR.format:
             value = self.__dict__[name]
             buf = struct.pack('<'+typecode,value)
             ret += buf
