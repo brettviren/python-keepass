@@ -232,7 +232,7 @@ class Node(object):
             (tab,self.name(),len(self.entries),len(self.nodes))
         children = []
         for e in self.entries:
-            s = "%s%s(%s: %s)\n"%(tab,tab,e.title,e.username)
+            s = "%s%s%s: %s\n"%(tab,tab,e.title,e.username)
             children.append(s)
         for n in self.nodes:
             children.append(n.pretty(depth+1))
