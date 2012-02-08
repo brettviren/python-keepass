@@ -24,7 +24,9 @@ class Cli(object):
         self.hier = None
         self.command_line = None
         self.ops = {}
-        if args: self.parse_args(args)
+        self.masterkey = None
+        if args:
+            self.parse_args(args)
 
     def parse_args(self,args):
         '''
@@ -64,7 +66,7 @@ class Cli(object):
             cmdline.append(chunk)
         self.command_line = cmdline
 
-    def __call__(self):
+    def run(self):
         'Process commands'
         if not self.command_line:
             print self._general_op().print_help()
@@ -79,9 +81,9 @@ class Cli(object):
         
         Example: open, dump to screen and save
 
-        keepassc open -m "My Secret" input.kpdb \
+        keepassc open input.kpdb \
                  dump -f '"%(title)s" "%(username)s" %(url)s' \
-                 save -m "New Secret" output.kpdb
+                 save output.kpdb
 
         execute "help" command for more information.
         '''
@@ -105,7 +107,8 @@ class Cli(object):
         for cmd in Cli.commands:
             meth = eval('self._%s_op'%cmd)
             op = meth()
-            if not op: continue
+            if not op:
+                continue
             print '%s'%cmd.upper()
             op.print_help()
             print
@@ -113,37 +116,28 @@ class Cli(object):
     def _open_op(self):
         'open [options] filename'
         from optparse import OptionParser
-        op = OptionParser(usage=self._open_op.__doc__,add_help_option=False)
-        op.add_option('-m','--masterkey',type='string',default="",
-                      help='Set master key for decrypting file, default: ""')
-        return op
+        return OptionParser(usage=self._open_op.__doc__,add_help_option=False)
 
     def _open(self,opts):
         'Read a file to the in-memory database'
         opts,files = self.ops['open'].parse_args(opts)
-        from keepasslib import kpdb
-        # fixme - add support for openning/merging multiple DBs!
-        try:
-            dbfile = files[0]
-        except IndexError:
+        if not files:
             print "No database file specified"
             sys.exit(1)
-        self.db = kpdb.Database(files[0],opts.masterkey)
+        from keepasslib import kpdb
+        self.db = kpdb.Database(files[0], self.get_masterkey())
         self.hier = self.db.hierarchy()
 
     def _save_op(self):
         'save [options] filename'
         from optparse import OptionParser
-        op = OptionParser(usage=self._save_op.__doc__,add_help_option=False)
-        op.add_option('-m','--masterkey',type='string',default="",
-                      help='Set master key for encrypting file, default: ""')
-        return op
+        return OptionParser(usage=self._save_op.__doc__,add_help_option=False)
 
     def _save(self,opts):
         'Save the current in-memory database to a file'
-        opts,files = self.ops['save'].parse_args(opts)
+        opts, files = self.ops['save'].parse_args(opts)
         self.db.update(self.hier)
-        self.db.write(files[0],opts.masterkey)
+        self.db.write(files[0], self.get_masterkey())
 
     def _dump_op(self):
         'dump [options] [name|/group/name]'
@@ -166,7 +160,7 @@ class Cli(object):
         #self.hier.dump(opts.format,opts.show_passwords)
 
     def _entry_op(self):
-        'entry [options] username [password]'
+        'entry [options] username'
         from optparse import OptionParser
         op = OptionParser(usage=self._entry_op.__doc__,add_help_option=False)
         op.add_option('-p','--path',type='string',default='/',
@@ -185,27 +179,38 @@ class Cli(object):
 
     def _entry(self,opts):
         'Add an entry into the database'
-        import getpass
         opts,args = self.ops['entry'].parse_args(opts)
         username = args[0]
-        try:
-            password = args[1]
-        except:
-            password1 = password2 = None
-            while True:
-                password1 = getpass.getpass()
-                password2 = getpass.getpass()
-                if password1 != password2: 
-                    sys.stderr.write("Error: Your passwords didn't match\n")
-                    continue
-                break
+        password = get_password(twice=True)
         self.db.add_entry(opts.path,opts.title or username,username,password,
                           opts.url,opts.note,opts.imageid,opts.append)
+
+    def get_masterkey(self):
+        """Get masterkey, asking for password if not set."""
+        if self.masterkey is None:
+            self.masterkey = get_password()
+        return self.masterkey
+
+
+def get_password(twice=False):
+    """Get password with getpass(), asking for it twice if needed."""
+    import getpass
+    password1 = None
+    if twice:
+        password2 = None
+        while password1 is None or (password1 != password2):
+            password1 = getpass.getpass()
+            password2 = getpass.getpass()
+            if password1 != password2:
+                sys.stderr.write("Error: Your passwords didn't match\n")
+    else:
+        password1 = getpass.getpass()
+    return password1
 
 
 def main(args):
     cliobj = Cli(args)
-    cliobj()
+    cliobj.run()
 
 
 if __name__ == '__main__':
