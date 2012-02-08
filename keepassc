@@ -181,30 +181,30 @@ class Cli(object):
         'Add an entry into the database'
         opts,args = self.ops['entry'].parse_args(opts)
         username = args[0]
-        password = get_password(twice=True)
+        password = get_password('Keepass entry password', twice=True)
         self.db.add_entry(opts.path,opts.title or username,username,password,
                           opts.url,opts.note,opts.imageid,opts.append)
 
     def get_masterkey(self):
         """Get masterkey, asking for password if not set."""
         if self.masterkey is None:
-            self.masterkey = get_password()
+            self.masterkey = get_password('Keepass masterkey')
         return self.masterkey
 
 
-def get_password(twice=False):
+def get_password(prompt, twice=False):
     """Get password with getpass(), asking for it twice if needed."""
     import getpass
     password1 = None
     if twice:
         password2 = None
         while password1 is None or (password1 != password2):
-            password1 = getpass.getpass()
-            password2 = getpass.getpass()
+            password1 = getpass.getpass(prompt+': ')
+            password2 = getpass.getpass(prompt+' (again):')
             if password1 != password2:
                 sys.stderr.write("Error: Your passwords didn't match\n")
     else:
-        password1 = getpass.getpass()
+        password1 = getpass.getpass(prompt+': ')
     return password1
 
 
