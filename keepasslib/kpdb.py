@@ -175,9 +175,11 @@ class Database(object):
                                        header.encryption_iv)
 
         fp = open(filename,'w')
-        fp.write(header.encode())
-        fp.write(payload)
-        fp.close()
+        try:
+            fp.write(header.encode())
+            fp.write(payload)
+        finally:
+            fp.close()
 
     def group(self,field,value):
         'Return the group which has the given field and value'
