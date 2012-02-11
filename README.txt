@@ -1,7 +1,7 @@
 keepassc and python-keepass
 
-This provides command line and Python interfaces for operating on
-files in KeePass format v3 (used by KeePass 1.x, and KeePassX).
+This provides command line and Python interfaces for reading
+KeePass files (used by KeePass 1.x, and KeePassX).
 
 * Notes of caution
 
@@ -14,13 +14,6 @@ and correctness limitations:
 
  * It is quite easy to display the stored passwords in plain text,
    although the defaults try to avoid this.
-
- * Specifying the master key on the command line will leave traces in
-   your shells history and in the process list.
-
- * While input files are treated as read-only, keep backups of any
-   files written by KeePass/KeePassX until you are assured that files
-   written by this code are usable.
 
  * Key files are not currently supported
 
@@ -38,24 +31,20 @@ sudo apt-get install python-crypto
 The command line interface is run like:
 
 #+begin_src shell
-keepassc [general_options] [command command_options] ...
+keepassc <command> [command_options] ...
 #+end_src
 
-Multiple commands can be specified and will be executed in order.
-They operate on an in-memory instance of the database file.  An
-example, 
+Examples:
 
 #+begin_src shell
-keepass open -m secret file.kdb \
-        dump -p -f '%(username)s password is: %(password)s' \
-        save -m newsecret backup.kdb
+keepass dump file.kdb
+keepass search hello file.kdb
 #+end_src
 
 Online help:
 
 #+begin_src shell
-keepass -h      # short usage
-keepass help    # full usage
+keepass --help
 #+end_src
 
 * Python Modules

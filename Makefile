@@ -15,6 +15,7 @@ PY_FILES:=\
 	setup.py \
 	keepassc \
 	keepasslib/__init__.py \
+	keepasslib/baker.py \
 	keepasslib/decorators.py \
 	keepasslib/header.py \
 	keepasslib/hier.py \

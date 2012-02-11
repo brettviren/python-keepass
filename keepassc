@@ -1,138 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-Command line interface to manipulating keepass files
+Command line interface to read keepass files
 '''
 import sys
-
-
-class Cli(object):
-    '''
-    Process command line
-    '''
-
-    commands = [
-        'help',                 # print help message
-        'dump',                 # dump complete database
-    ]
-
-    def __init__(self,args=None):
-        self.db = None
-        self.hier = None
-        self.command_line = None
-        self.ops = {}
-        self.masterkey = None
-        if args:
-            self.parse_args(args)
-
-    def parse_args(self,args):
-        '''
-        keepass.cli [options] [cmd [options]] [...]
-
-        The command line consists of general options followed by zero
-        or more commands and their options.
-
-        '''
-
-        def splitopts(argv):
-            'Split optional command and its args removing them from input'
-            if not argv: return None
-
-            cmd=""
-            if argv[0][0] != '-':
-                if argv[0] not in Cli.commands:
-                    raise ValueError,'Unknown command: "%s"'%argv[0]
-                cmd = argv.pop(0)
-            copy = list(argv)
-            cmdopts = []
-            for arg in copy:
-                if arg in Cli.commands: break
-                cmdopts.append(argv.pop(0))
-            return [cmd,cmdopts]
-
-        cmdline = []
-        copy = list(args)
-        while copy:
-            chunk = splitopts(copy)
-            if not chunk: break
-            if not chunk[0]: chunk[0] = 'general'
-            meth = eval('self._%s_op'%chunk[0])
-            self.ops[chunk[0]] = meth()
-            cmdline.append(chunk)
-        self.command_line = cmdline
-
-    def run(self):
-        'Process commands'
-        if not self.command_line:
-            print self._general_op().print_help()
-            return
-        for cmd,cmdopts in self.command_line:
-            meth = eval('self._%s'%cmd)
-            meth(cmdopts)
-
-    def _general_op(self):
-        '''
-        keepassc [options] [cmd cmd_options] ...
-        
-        Example:
-        keepassc dump -f '"%(title)s" "%(username)s" %(url)s' input.kdb
-
-        execute "help" command for more information.
-        '''
-        from optparse import OptionParser
-        return OptionParser(usage=self._general_op.__doc__)
-
-    def _general(self,opts):
-        'Process general options'
-        opts,args = self.ops['general'].parse_args(opts)
-
-    def _help_op(self):
-        pass
-
-    def _help(self,opts):
-        'Print some helpful information'
-        print 'Available commands:'
-        for cmd in Cli.commands:
-            meth = eval('self._%s'%cmd)
-            print '\t%s: %s'%(cmd,meth.__doc__)
-        print '\nPer-command help:\n'
-        for cmd in Cli.commands:
-            meth = eval('self._%s_op'%cmd)
-            op = meth()
-            if not op:
-                continue
-            print '%s'%cmd.upper()
-            op.print_help()
-            print
-
-    def _dump_op(self):
-        'dump [options] [name|/group/name]'
-        from optparse import OptionParser
-        op = OptionParser(usage=self._dump_op.__doc__,add_help_option=False)
-        op.add_option('-p','--show-passwords',action='store_true',default=False,
-                      help='Show passwords as plain text')
-        op.add_option('-f','--format',type='string',
-                      default='%(group_name)s/%(username)s: %(title)s %(url)s',
-                      help='Set the format of the dump')
-        return op
-
-    def _dump(self,opts):
-        'Print the current database in a formatted way.'
-        opts,files = self.ops['dump'].parse_args(opts)
-        if not files:
-            print "No database file specified"
-            sys.exit(1)
-        from keepasslib import kpdb
-        self.db = kpdb.Database(files[0], self.get_masterkey())
-        self.hier = self.db.hierarchy()
-        print self.hier
-        #self.hier.dump(opts.format,opts.show_passwords)
-
-    def get_masterkey(self):
-        """Get masterkey, asking for password if not set."""
-        if self.masterkey is None:
-            self.masterkey = get_password('Keepass masterkey')
-        return self.masterkey
+import os
+from keepasslib import baker
 
 
 def get_password(prompt, twice=False):
@@ -151,10 +24,44 @@ def get_password(prompt, twice=False):
     return password1
 
 
-def main(args):
-    cliobj = Cli(args)
-    cliobj.run()
+def get_masterkey():
+    return get_password('Keepass masterkey')
 
 
-if __name__ == '__main__':
-    main(sys.argv[1:])
+def open_keepass_db(filename):
+    """Open a keepass database."""
+    from keepasslib import kpdb
+    print "Opening keepass database", os.path.basename(filename), "..."
+    return kpdb.Database(filename, get_masterkey())
+
+
+shortopts = {'show-passwords': 'p'}
+params = {'show-passwords': 'Show passwords as plain text.'}
+@baker.command(shortopts=shortopts, params=params)
+def dump(dbfile, *dbfiles, **kwargs):
+    """Print contents of keepass databases."""
+    allfiles = (dbfile,) + dbfiles
+    for filename in allfiles:
+        db = open_keepass_db(filename)
+        hier = db.hierarchy()
+        #hier.dump(opts.format,opts.show_passwords)
+        print hier
+
+
+shortopts = {'search-passwords': 'p'}
+params = {'search-passwords': 'Also search passwords.'}
+@baker.command(default=True, shortopts=shortopts, params=params)
+def search(key, dbfile, *dbfiles, **kwargs):
+    """Searches given key in all entries in keepass databases."""
+    allfiles = (dbfile,) + dbfiles
+    for filename in allfiles:
+        db = open_keepass_db(filename)
+        for entry in db.hierarchy().search(key):
+            print entry
+
+
+try:
+    sys.exit(baker.run())
+except baker.CommandError, msg:
+    print >>sys.stderr, "keepassc error:", msg
+    sys.exit(1)
