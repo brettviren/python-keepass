@@ -227,58 +227,25 @@ class Database(object):
 
         return top
 
-    def update(self,hierarchy):
-        '''
-        Update the database using the given hierarchy.  
-        This replaces the existing groups and entries.
-        '''
-        from .hier import CollectVisitor
-        collector = CollectVisitor()
-        hierarchy.visit(collector)
-        self.groups = collector.groups
-        self.entries = collector.entries
+    def search(self, key, search_passwords=False):
+        """Get all groups and entries containing the given key.
+        Search group names and title, url and username of entries.
+        Also searches entry passwords if search_password is True.
+        The search is performed case insensitive.
 
-    def gen_uuid(self):
-        "Generate 16 bytes of randomness suitable for an entry's UUID"
-        return 4                # only call once
-
-    def gen_groupid(self):
-        "Generate 4 bytes of randomness suitable for a group's unique group id"
-        return 4                # only call once
-
-    def add_entry(self,path,title,username,password,url="",notes="",imageid=1,append=True):
-        '''
-        Add an entry to the current database at with given values.  If
-        append is False a pre-existing entry that matches path, title
-        and username will be overwritten with the new one.
-        '''
-        from . import hier, infoblock
-
-        top = self.hierarchy()
-        node = hier.mkdir(top,path)
-
-        # fixme, this should probably be moved into a new constructor
-        def make_entry():
-            new_entry = infoblock.EntryInfo()
-            new_entry.uuid = self.gen_uuid()
-            new_entry.groupid = node.groupid
-            new_entry.imageid = imageid
-            new_entry.title = title
-            new_entry.url = url
-            new_entry.username = username
-            new_entry.password = password
-            new_entry.notes = notes
-            #fixme, deal with times
-            return new_entry
-
-        if append:
-            self.entries.append(make_entry())
-            return
-
-        for ent in self.entries:
-            if ent.title != title: continue
-            if ent.username != username: continue
-            ent = make_entry()
-            return
-        self.entries.append(make_entry())
-
+        @return: iterator of groups and entries
+        @rtype: iterator(GroupInfo|EntryInfo)
+        """
+        key = key.lower()
+        for group in self.groups:
+            if key in group.group_name.lower():
+                yield group
+        for entry in self.entries:
+            if key in entry.title.lower():
+                yield entry
+            elif key in entry.url.lower():
+                yield entry
+            elif key in entry.username.lower():
+                yield entry
+            elif search_passwords and key in entry.password.lower():
+                yield entry
