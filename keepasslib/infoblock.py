@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 '''
 Classes and functions for the GroupInfo and EntryInfo blocks of a keepass file
 '''
@@ -37,7 +36,6 @@ def date_de():
         hour = ((b[2] & 0b1)      << 4) | (b[3] >> 4);
         min  = ((b[3] & 0b1111)   << 2) | (b[4] >> 6);
         sec  = ((b[4] & 0b111111));
-        #print 'dateify:',b,buf,year, mon, day, hour, min, sec
         return datetime(year, mon, day, hour, min, sec)
 
     def encode(val):
@@ -57,16 +55,19 @@ class InfoBase(object):
     def __init__(self,format,string=None):
         self.format = format
         self.order = []         # keep field order
-        if string: self.decode(string)
+        if string:
+            self.decode(string)
 
-    def __str__(self):
+    def __repr__(self):
         ret = [self.__class__.__name__ + ':']
-        for num,form in self.format.iteritems():
-            try:
-                value = self.__dict__[form[0]]
-            except KeyError:
+        for num,form in self.format.items():
+            attr = form[0]
+            if attr is None:
                 continue
-            ret.append('\t%s %s'%(form[0],value))
+            try:
+                ret.append('  %s=%r' % (attr, getattr(self, attr)))
+            except AttributeError:
+                pass
         return '\n'.join(ret)
 
     def decode(self,string):
@@ -83,17 +84,15 @@ class InfoBase(object):
             buf = struct.unpack('<%ds'%siz,substr)[0]
 
             name,decenc = self.format[typ]
-            if name is None: break
+            if name is None:
+                break
             try:
                 value = decenc[0](buf)
             except struct.error,msg:
-                msg = '%s, typ = %d[%d] -> %s buf = "%s"'%\
+                msg = '%s, typ = %d[%d] -> %s buf = "%s"' % \
                     (msg,typ,siz,self.format[typ],buf)
-                raise struct.error,msg
-
-            #print '%s: type = %d[%d] -> %s buf = "%s" value = %s'%\
-            #    (name,typ,siz,self.format[typ],buf,str(value))
-            self.__dict__[name] = value
+                raise struct.error(msg)
+            setattr(self, name, value)
 
     def __len__(self):
         length = 0
@@ -109,7 +108,7 @@ class InfoBase(object):
                 encoded = None
             else:
                 name,decenc = self.format[typ]
-                value = self.__dict__[name]
+                value = getattr(self, name)
                 encoded = decenc[1](value)
             buf = struct.pack('<H',typ)
             buf += struct.pack('<I',siz)
@@ -156,10 +155,10 @@ Notes:
         0x8: ('level',short_de()),
         0x9: ('flags',int_de()),
         0xFFFF: (None,None),
-        }
+    }
 
     def __init__(self,string=None):
-        super(GroupInfo,self).__init__(GroupInfo.format,string)
+        super(GroupInfo,self).__init__(GroupInfo.format,string=string)
 
     def name(self):
         'Return the group_name'
@@ -213,10 +212,10 @@ Notes:
         0xd: ('binary_desc',string_de()),
         0xe: ('binary_data',shunt_de()),
         0xFFFF: (None,None),
-        }
+    }
 
     def __init__(self,string=None):
-        super(EntryInfo,self).__init__(EntryInfo.format,string)
+        super(EntryInfo,self).__init__(EntryInfo.format,string=string)
 
     def name(self):
         'Return the title'
