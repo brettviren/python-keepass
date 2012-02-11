@@ -56,7 +56,9 @@ def search(key, dbfile, *dbfiles, **kwargs):
     allfiles = (dbfile,) + dbfiles
     for filename in allfiles:
         db = open_keepass_db(filename)
-        for entry in db.hierarchy().search(key):
+        search_passwords = kwargs.get('search-passwords')
+        for entry in db.search(key, search_passwords=search_passwords):
+            # XXX: implement entry.format()
             print entry
 
 
@@ -64,4 +66,5 @@ try:
     sys.exit(baker.run())
 except baker.CommandError, msg:
     print >>sys.stderr, "keepassc error:", msg
+    baker.help(sys.argv[0], sys.stderr)
     sys.exit(1)
