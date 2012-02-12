@@ -12,7 +12,6 @@ General structure:
 
 '''
 
-import sys
 import hashlib
 
 from .header import DBHDR
@@ -35,7 +34,7 @@ class Database(object):
 
     def read(self,filename):
         'Read in given .kdb file'
-        fp = open(filename)
+        fp = open(filename, 'rb')
         try:
             buf = fp.read()
         finally:
