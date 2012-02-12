@@ -1,0 +1,45 @@
+# keepassc completion
+#
+have keepassc &&
+{
+_keepassc()
+{
+	local cur prev commands options command
+
+	COMPREPLY=()
+	cur=`_get_cword`
+
+	commands='dump search'
+
+	if [[ $COMP_CWORD -eq 1 ]] ; then
+		if [[ "$cur" == -* ]]; then
+			COMPREPLY=( $( compgen -W '--help' -- $cur ) )
+		else
+			COMPREPLY=( $( compgen -W "$commands" -- $cur ) )
+		fi
+	else
+
+		command=${COMP_WORDS[1]}
+
+		if [[ "$cur" == -* ]]; then
+			# possible options for the command
+			options=''
+			case $command in
+			dump|search)
+				options='--show-passwords'
+				;;
+			esac
+			options="$options --help"
+
+			COMPREPLY=( $( compgen -W "$options" -- $cur ) )
+		else
+                	# XXX allow search keyword
+			_filedir
+		fi
+	fi
+
+	return 0
+}
+complete -F _keepassc $filenames keepassc
+
+}
