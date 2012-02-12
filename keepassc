@@ -41,20 +41,19 @@ params = {'show-passwords': 'Show passwords as plain text.'}
 def dump(dbfile, *dbfiles, **kwargs):
     """Print contents of keepass databases."""
     allfiles = (dbfile,) + dbfiles
+    show_passwords = kwargs.get('show-passwords')
     for filename in allfiles:
         db = open_keepass_db(filename)
-        hier = db.hierarchy()
-        #hier.dump(opts.format,opts.show_passwords)
-        print hier
+        print db.hierarchy().dump(show_passwords=show_passwords)
 
 
 @baker.command(default=True, shortopts=shortopts, params=params)
 def search(key, dbfile, *dbfiles, **kwargs):
     """Searches given key in all entries in keepass databases."""
     allfiles = (dbfile,) + dbfiles
+    show_passwords = kwargs.get('show-passwords')
     for filename in allfiles:
         db = open_keepass_db(filename)
-        show_passwords = kwargs.get('show-passwords')
         for entry in db.search(key, search_passwords=show_passwords):
             format = "%(title)s: user=%(username)r pass=%(password)r url=%(url)s"
             print entry.strformat(format, show_passwords=show_passwords)

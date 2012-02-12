@@ -9,6 +9,4 @@ class TestDumpDb (unittest.TestCase):
         filename = get_resource("test.kdb")
         masterkey = 'test'
         db = kpdb.Database(filename, masterkey)
-        print db
-        h = db.hierarchy()
-        print h
+        print db.hierarchy().dump()

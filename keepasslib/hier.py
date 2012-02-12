@@ -218,25 +218,26 @@ class Node(object):
         return -1
 
     def __str__(self):
-        return self.pretty()
+        return self.dump()
 
     def name(self):
         'Return name of group or None if no group'
         if self.group:
             return self.group.group_name
 
-    def pretty(self,depth=0):
+    def dump(self, depth=0, show_passwords=False):
         'Pretty print this Node and its contents'
-        tab = '  '*depth
-        me = "%s%s (%d entries) (%d subnodes)\n"%\
-            (tab,self.name(),len(self.entries),len(self.nodes))
-        children = []
-        for e in self.entries:
-            s = "%s%s%s: %s\n"%(tab,tab,e.title,e.username)
-            children.append(s)
-        for n in self.nodes:
-            children.append(n.pretty(depth+1))
-        return me + ''.join(children)
+        lines = []
+        indent = '  '*depth
+        lines.append("%s%s (%d entries) (%d subnodes)" %
+            (indent,self.name(),len(self.entries),len(self.nodes)))
+        format = "%(title)s: %(username)s %(password)s"
+        for entry in self.entries:
+            s = entry.strformat(format, show_passwords=show_passwords)
+            lines.append("%s%s%s" % (indent, indent, s))
+        for node in self.nodes:
+            lines.append(node.dump(depth+1))
+        return '\n'.join(lines)
 
     def node_with_group(self,group):
         'Return the child node holding the given group'
