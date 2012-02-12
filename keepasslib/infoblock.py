@@ -117,6 +117,13 @@ class InfoBase(object):
             string += buf
         return string
 
+    def strformat(self, format, show_passwords=False):
+        """Return formatted string for this entry."""
+        dat = dict(self.__dict__) # copy
+        if not show_passwords:
+            dat['password'] = '****'
+        return format%dat
+
 
 class GroupInfo(InfoBase):
     '''One group: [FIELDTYPE(FT)][FIELDSIZE(FS)][FIELDDATA(FD)]
@@ -159,6 +166,9 @@ Notes:
 
     def __init__(self,string=None):
         super(GroupInfo,self).__init__(GroupInfo.format,string=string)
+
+    def __str__(self):
+        return self.strformat("Group %(group_name)s")
 
     def name(self):
         'Return the group_name'
@@ -216,6 +226,9 @@ Notes:
 
     def __init__(self,string=None):
         super(EntryInfo,self).__init__(EntryInfo.format,string=string)
+
+    def __str__(self):
+        return self.strformat("%(title)s: %(username)s %(password)s")
 
     def name(self):
         'Return the title'

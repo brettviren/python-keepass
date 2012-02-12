@@ -186,23 +186,6 @@ class Database(object):
         for group in self.groups:
             if group.__dict__[field] == value: return group
 
-    def dump_entries(self,format,show_passwords=False):
-        for ent in self.entries:
-            group = self.group('groupid',ent.groupid)
-            if not group:
-                sys.stderr.write("Skipping missing group with ID %d\n"%
-                                 ent.groupid)
-                continue
-            dat = dict(ent.__dict__) # copy
-            if not show_passwords:
-                dat['password'] = '****'
-            for what in ['group_name','level']:
-                nick = what
-                if 'group' not in nick: nick = 'group_'+nick
-                dat[nick] = group.__dict__[what]
-
-            print format%dat
-
     def hierarchy(self):
         '''Return database with groups and entries organized into a
         hierarchy'''
@@ -237,9 +220,6 @@ class Database(object):
         @rtype: iterator(GroupInfo|EntryInfo)
         """
         key = key.lower()
-        for group in self.groups:
-            if key in group.group_name.lower():
-                yield group
         for entry in self.entries:
             if key in entry.title.lower():
                 yield entry

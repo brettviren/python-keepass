@@ -58,13 +58,13 @@ def search(key, dbfile, *dbfiles, **kwargs):
         db = open_keepass_db(filename)
         search_passwords = kwargs.get('search-passwords')
         for entry in db.search(key, search_passwords=search_passwords):
-            # XXX: implement entry.format()
-            print entry
+            format = "%(title)s: user=%(username)r pass=%(password)r url=%(url)s"
+            print entry.strformat(format, show_passwords=search_passwords)
 
 
 try:
     sys.exit(baker.run())
 except baker.CommandError, msg:
     print >>sys.stderr, "keepassc error:", msg
-    baker.help(sys.argv[0], sys.stderr)
+    baker.help(sys.argv[0])
     sys.exit(1)
