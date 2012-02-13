@@ -54,4 +54,7 @@ test:
 	$(PYTHON) $(NOSETESTS) --processes=$(NUMPROCESSORS) \
 	  -v -m "^test_.*" $(TESTOPTS) $(TESTS)
 
-.PHONY: dist chmod check pyflakes doccheck test
+deb:
+	git-buildpackage --git-export-dir=../build-area/ --git-upstream-branch=master --git-debian-branch=debian  --git-ignore-new
+
+.PHONY: dist chmod check pyflakes doccheck test deb
