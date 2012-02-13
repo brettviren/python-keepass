@@ -10,6 +10,7 @@ else
   NUMPROCESSORS:=$(shell grep -c processor /proc/cpuinfo)
   CHMODMINUSMINUS:=--
 endif
+DEBUILD_AREA:=$(HOME)/src/build-area
 
 PY_FILES:=\
 	setup.py \
@@ -55,6 +56,6 @@ test:
 	  -v -m "^test_.*" $(TESTOPTS) $(TESTS)
 
 deb:
-	git-buildpackage --git-export-dir=../build-area/ --git-upstream-branch=master --git-debian-branch=debian  --git-ignore-new
+	git-buildpackage --git-export-dir=$(DEBUILD_AREA) --git-upstream-branch=master --git-debian-branch=debian  --git-ignore-new
 
 .PHONY: dist chmod check pyflakes doccheck test deb
