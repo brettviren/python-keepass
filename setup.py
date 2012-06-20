@@ -23,7 +23,7 @@ except ImportError:
     pass
 
 appname = 'python-keepass'
-version = '0.1'
+version = '0.2'
 description = "Command line and python interface for KeePass v3 files."
 long_description = """
 A command line and Python interface for operating on
