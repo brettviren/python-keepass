@@ -1,3 +1,7 @@
+0.2 (Released xx.xx.2012)
+
+  * Search and show path names of entries.
+
 0.1 (released 31.2.2012)
 
   * Initial Release.

@@ -55,6 +55,7 @@ class InfoBase(object):
     def __init__(self,format,string=None):
         self.format = format
         self.order = []         # keep field order
+        self.parent = None
         if string:
             self.decode(string)
 
@@ -120,9 +121,18 @@ class InfoBase(object):
     def strformat(self, format, show_passwords=False):
         """Return formatted string for this entry."""
         dat = dict(self.__dict__) # copy
+        dat['path'] = self.path()
         if not show_passwords:
             dat['password'] = '****'
         return format%dat
+
+    def path(self):
+        path = ""
+        parent = self.parent
+        while parent:
+            path = parent.name() + "/" + path
+            parent = parent.parent
+        return "/" + path
 
 
 class GroupInfo(InfoBase):

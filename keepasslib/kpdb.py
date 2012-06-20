@@ -25,12 +25,12 @@ class Database(object):
     
     def __init__(self, filename=None, masterkey=""):
         self.masterkey = masterkey
+        self.groups = []
+        self.entries = []
         if filename:
             self.read(filename)
         else:
             self.header = DBHDR()
-            self.groups = []
-            self.entries = []
 
     def read(self,filename):
         'Read in given .kdb file'
@@ -42,8 +42,6 @@ class Database(object):
 
         headbuf = buf[:124]
         self.header = DBHDR(headbuf)
-        self.groups = []
-        self.entries = []
 
         payload = buf[124:]
 
@@ -58,6 +56,11 @@ class Database(object):
         ngroups = self.header.ngroups
         while ngroups:
             gi = GroupInfo(payload)
+            if gi.level > 0:
+                for group in reversed(self.groups):
+                    if group.level < gi.level:
+                        gi.parent = group
+                        break
             self.groups.append(gi)
             length = len(gi)
             #print 'GroupInfo of length',length,'payload=',len(payload)
@@ -67,6 +70,10 @@ class Database(object):
         nentries = self.header.nentries
         while nentries:
             ei = EntryInfo(payload)
+            for group in self.groups:
+                if group.groupid == ei.groupid:
+                    ei.parent = group
+                    break
             self.entries.append(ei)
             payload = payload[len(ei):]
             nentries -= 1
@@ -225,6 +232,8 @@ class Database(object):
             elif key in entry.url.lower():
                 yield entry
             elif key in entry.username.lower():
+                yield entry
+            elif key in entry.path().lower():
                 yield entry
             elif search_passwords and key in entry.password.lower():
                 yield entry
