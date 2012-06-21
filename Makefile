@@ -38,6 +38,9 @@ dist: MANIFEST chmod
 app: chmod
 	$(PYTHON) setup.py py2app $(PY2APPOPTS)
 
+doc/keepassc.1.html: doc/keepassc.1
+	man2html -r $< | tail -n +2 | sed 's/Time:.*//g' | sed 's@/:@/@g' > $@
+
 doccheck:
 	py-check-docstrings --force $(PY_FILES)
 

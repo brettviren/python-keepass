@@ -1,3 +1,5 @@
 include setup.py
 include keepassc
+include doc/*.txt doc/*.1 doc/*.html
 recursive-include keepasslib *.py
+recursive-include tests *.py *.kdb

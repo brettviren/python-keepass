@@ -48,7 +48,7 @@ def dump(dbfile, *dbfiles, **kwargs):
 
 
 @baker.command(default=True, shortopts=shortopts, params=params)
-def uearch(key, dbfile, *dbfiles, **kwargs):
+def search(key, dbfile, *dbfiles, **kwargs):
     """Searches given key in all entries in keepass databases."""
     allfiles = (dbfile,) + dbfiles
     show_passwords = kwargs.get('show-passwords')
