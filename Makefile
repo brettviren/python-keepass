@@ -10,6 +10,13 @@ else
   NUMPROCESSORS:=$(shell grep -c processor /proc/cpuinfo)
   CHMODMINUSMINUS:=--
 endif
+# Nose options:
+# - do not show output of successful tests
+# - use multiple processors
+# - be verbose
+# - only run test_* methods
+NOSEOPTS:=--logging-clear-handlers --processes=$(NUMPROCESSORS) -v -m '^test_.*'
+
 DEBUILD_AREA:=$(HOME)/src/build-area
 
 PY_FILES:=\
@@ -55,8 +62,7 @@ pyflakes:
 	pyflakes $(PY_FILES)
 
 test:
-	$(PYTHON) $(NOSETESTS) --processes=$(NUMPROCESSORS) \
-	  -v -m "^test_.*" $(TESTOPTS) $(TESTS)
+	$(PYTHON) $(NOSETESTS) $(NOSEOPTS) $(TESTOPTS) $(TESTS)
 
 deb:
 	git-buildpackage --git-export-dir=$(DEBUILD_AREA) --git-upstream-branch=master --git-debian-branch=debian  --git-ignore-new
