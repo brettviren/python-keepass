@@ -2,20 +2,17 @@
 PYVER:=2.7
 PYTHON:=python$(PYVER)
 ifeq ($(shell uname),Darwin)
-  NOSETESTS:=/usr/local/share/python/nosetests
   NUMPROCESSORS:=$(shell sysctl -a | grep machdep.cpu.core_count | cut -d " " -f 2)
   CHMODMINUSMINUS:=
 else
-  NOSETESTS:=$(shell which nosetests)
   NUMPROCESSORS:=$(shell grep -c processor /proc/cpuinfo)
   CHMODMINUSMINUS:=--
 endif
-# Nose options:
-# - do not show output of successful tests
+# Pytest options:
 # - use multiple processors
-# - be verbose
-# - only run test_* methods
-NOSEOPTS:=--logging-clear-handlers --processes=$(NUMPROCESSORS) -v -m '^test_.*'
+# - write test results in file
+# - run all tests found in the "tests" subdirectory
+PYTESTOPTS:=-n $(NUMPROCESSORS) --resultlog=testresults.txt
 
 DEBUILD_AREA:=$(HOME)/src/build-area
 
@@ -62,7 +59,7 @@ pyflakes:
 	pyflakes $(PY_FILES)
 
 test:
-	$(PYTHON) $(NOSETESTS) $(NOSEOPTS) $(TESTOPTS) $(TESTS)
+	$(PYTHON) -m pytest $(PYTESTOPTS) $(TESTOPTS) $(TESTS)
 
 deb:
 	git-buildpackage --git-export-dir=$(DEBUILD_AREA) --git-upstream-branch=master --git-debian-branch=debian  --git-ignore-new
