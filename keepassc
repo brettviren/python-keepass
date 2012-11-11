@@ -31,6 +31,8 @@ def get_masterkey():
 def open_keepass_db(filename):
     """Open a keepass database."""
     from keepasslib import kpdb
+    if not os.path.isfile(filename):
+        raise baker.CommandError("keepass database %r not found" % filename)
     print "Opening keepass database", os.path.basename(filename), "..."
     return kpdb.Database(filename, get_masterkey())
 
