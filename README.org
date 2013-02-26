@@ -88,3 +88,8 @@ A big credit is due to rudi & shirou (same hacker?) for the following:
 
 Looking through KeePass/KeePassX source made my head swim.  Only after
 reviewing their work could I get started.
+
+* License
+
+This package is Free Software licensed to you under the GPL v2 or
+later at your discretion. See the [[./LICENSE]] file for details.
