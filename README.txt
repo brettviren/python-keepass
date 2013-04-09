@@ -5,7 +5,7 @@ KeePass files (used by KeePass 1.x, and KeePassX).
 
 * Notes of caution
 
-Before using this code, understand the its (known) security
+Before using this code, understand its (known) security
 and correctness limitations:
 
  * Unlike the KeePass/KeePassX GUI applications this code makes no
