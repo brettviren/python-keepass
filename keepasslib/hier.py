@@ -231,7 +231,7 @@ class Node(object):
         indent = '  '*depth
         lines.append("%s%s (%d entries) (%d subnodes)" %
             (indent,self.name(),len(self.entries),len(self.nodes)))
-        format = "%(title)s: %(username)s %(password)s"
+        format = "%(title)s: %(username)s %(password)s %(notes)r"
         for entry in self.entries:
             s = entry.strformat(format, show_passwords=show_passwords)
             lines.append("%s%s%s" % (indent, indent, s))
