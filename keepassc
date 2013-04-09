@@ -56,8 +56,10 @@ def search(key, dbfile, *dbfiles, **kwargs):
     show_passwords = kwargs.get('show-passwords')
     for filename in allfiles:
         db = open_keepass_db(filename)
-        for entry in db.search(key, search_passwords=show_passwords):
-            format = "%(path)s%(title)s: user=%(username)r pass=%(password)r"
+        for entry in db.search(key, search_passwords=show_passwords, case_insensitive=True):
+            if entry.path().startswith('/Backup'):
+                continue
+            format = "%(path)s%(title)s: user=%(username)r pass=%(password)r notes=%(notes)r"
             print entry.strformat(format, show_passwords=show_passwords)
 
 
