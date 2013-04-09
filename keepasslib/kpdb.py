@@ -216,7 +216,7 @@ class Database(object):
 
         return top
 
-    def search(self, key, search_passwords=False):
+    def search(self, key, search_passwords=False, case_insensitive=False):
         """Get all groups and entries containing the given key.
         Search group names and title, url and username of entries.
         Also searches entry passwords if search_password is True.
@@ -225,15 +225,21 @@ class Database(object):
         @return: iterator of groups and entries
         @rtype: iterator(GroupInfo|EntryInfo)
         """
-        key = key.lower()
+        if case_insensitive:
+            f = lambda x: x.lower()
+        else:
+            f = lambda x: x
+        key = f(key)
         for entry in self.entries:
-            if key in entry.title.lower():
+            if key in f(entry.title):
                 yield entry
-            elif key in entry.url.lower():
+            elif key in f(entry.url):
                 yield entry
-            elif key in entry.username.lower():
+            elif key in f(entry.username):
                 yield entry
-            elif key in entry.path().lower():
+            elif key in f(entry.path()):
                 yield entry
-            elif search_passwords and key in entry.password.lower():
+            elif key in f(entry.notes):
+                yield entry
+            elif search_passwords and key in f(entry.password):
                 yield entry
