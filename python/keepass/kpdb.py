@@ -10,6 +10,17 @@ General structure:
 [Nx] All groups
 [Mx] All entries
 
+__init__( filename = None, masterkey="")
+__str__()
+read(filename)
+update(first, second=None)
+  update_by_hierarchy(hierarchy)
+  update_by_lists(groups,entries)
+update_entry(title,username,url,notes="",new_title=None,new_username=None,new_password=None,new_url=None,new_notes=None)
+add_entry(path,title,username,password,url="",notes="",imageid=1,append=True)
+remove_entry(username, url)
+remove_group(path, level=None)
+write(filename,masterkey="")
 '''
 
 # This file is part of python-keepass and is Copyright (C) 2012 Brett Viren.
@@ -19,7 +30,8 @@ General structure:
 # Free Software Foundation; either version 2, or (at your option) any
 # later version.
 
-import sys, struct
+import sys, struct, os
+import datetime
 
 from header import DBHDR
 from infoblock import GroupInfo, EntryInfo
@@ -31,6 +43,9 @@ class Database(object):
     '''
     
     def __init__(self, filename = None, masterkey=""):
+        if not filename and not masterkey:
+            filename = os.path.dirname(__file__) + "/example.kdb"
+            masterkey = "1"
         self.masterkey = masterkey
         if filename:
             self.read(filename)
@@ -38,6 +53,9 @@ class Database(object):
         self.header = DBHDR()
         self.groups = []
         self.entries = []
+        # add basic structure
+        #self.add_entry(self,"Internet","Meta-Info","SYSTEM","",url="$",notes="KPX_CUSTOM_ICONS_4",imageid=1,append=True)
+        #self.add_entry(self,"eMail","Meta-Info","SYSTEM","",url="$",notes="KPX_GROUP_TREE_STATE",imageid=1,append=True)
         return
 
     def read(self,filename):
@@ -64,6 +82,7 @@ class Database(object):
         ngroups = self.header.ngroups
         while ngroups:
             gi = GroupInfo(payload)
+            gi.lastacc_time = datetime.datetime.now()
             self.groups.append(gi)
             length = len(gi)
             #print 'GroupInfo of length',length,'payload=',len(payload)
@@ -74,6 +93,7 @@ class Database(object):
         nentries = self.header.nentries
         while nentries:
             ei = EntryInfo(payload)
+            ei.last_acc_time = datetime.datetime.now()
             self.entries.append(ei)
             payload = payload[len(ei):]
             nentries -= 1
@@ -247,8 +267,14 @@ class Database(object):
             n.entries.append(ent)
 
         return top
-
-    def update(self,hierarchy):
+      
+    def update(self, first, second=None):
+        if second:
+            self.update_by_lists(first, second)
+        else:
+            self.update_by_hierarchy(first)
+      
+    def update_by_hierarchy(self,hierarchy):
         '''
         Update the database using the given hierarchy.  
         This replaces the existing groups and entries.
@@ -259,7 +285,7 @@ class Database(object):
         self.update(collector.groups,collector.entries)
         return
 
-    def update(self,groups,entries):
+    def update_by_lists(self,groups,entries):
         '''
         Update the database using the given groups and entries.  This
         replaces the existing groups and entries.
@@ -275,6 +301,16 @@ class Database(object):
     def gen_groupid(self):
         "Generate 4 bytes of randomness suitable for a group's unique group id"
         return 4                # only call once
+      
+    def update_entry(self,title,username,url,notes="",new_title=None,new_username=None,new_password=None,new_url=None,new_notes=None):
+        for entry in self.entries:
+            if entry.title == str(title) and entry.username == str(username) and entry.url == str(url):
+                if new_title: entry.title = new_title
+                if new_username: entry.username = new_username
+                if new_password: entry.password = new_password
+                if new_url: entry.url = new_url
+                if new_notes: entry.notes = new_notes
+                entry.new_entry.last_mod_time = datetime.datetime.now()
 
     def add_entry(self,path,title,username,password,url="",notes="",imageid=1,append=True):
         '''
@@ -290,14 +326,36 @@ class Database(object):
         # fixme, this should probably be moved into a new constructor
         def make_entry():
             new_entry = infoblock.EntryInfo()
-            new_entry.uuid = self.gen_uuid()
-            new_entry.groupid = group.groupid
+            new_entry.uuid = "00000000000000000000000000000000"#str(self.gen_uuid())
+            new_entry.groupid = node.group.groupid
             new_entry.imageid = imageid
             new_entry.title = title
             new_entry.url = url
             new_entry.username = username
             new_entry.password = password
             new_entry.notes = notes
+            new_entry.creation_time = datetime.datetime.now() 
+            new_entry.last_mod_time = datetime.datetime.now() 
+            new_entry.last_acc_time = datetime.datetime.now() 
+            new_entry.expiration_time = datetime.datetime.now() 
+            new_entry.binary_desc = "bin-stream"
+            new_entry.binary_data = None
+            new_entry.order = [(1, 16), 
+			       (2, 4), 
+			       (3, 4), 
+			       (4, len(title) + 1), 
+			       (5, len(url) + 1), 
+			       (6, len(username) + 1), 
+			       (7, len(password) + 1), 
+			       (8, len(notes) + 1), 
+			       (9, 5), 
+			       (10, 5), 
+			       (11, 5), 
+			       (12, 5), 
+			       (13, len(new_entry.binary_desc) + 1), 
+			       (14, 0), 
+			       (65535, 0)]
+            #new_entry.None = None
             #fixme, deal with times
             return new_entry
 
@@ -312,6 +370,27 @@ class Database(object):
             return
 
         self.entries.append(make_entry())
-        
+
+    def remove_entry(self, username, url):
+        for entry in self.entries:
+            if entry.username == str(username) and entry.url == str(url):
+                self.entries.remove(entry)
+
+    def remove_group(self, path, level=None):
+        for group in self.groups:
+            if group.group_name == str(path):
+                if level:
+                    if group.level == level:
+                        self.groups.remove(group)
+                        for entry in self.entries:
+                            if entry.groupid == group.groupid:
+                                self.entries.remove(entry)
+                else:
+                    self.groups.remove(group)
+                    for entry in self.entries:
+                        if entry.groupid == group.groupid:
+                            self.entries.remove(entry)
+
+
     pass
 

@@ -12,6 +12,7 @@ Classes and functions for the GroupInfo and EntryInfo blocks of a keepass file
 # later version.
 
 import struct
+import sys
 
 # return tupleof (decode,encode) functions
 
@@ -168,7 +169,7 @@ Notes:
         0x5: ('lastacc_time',date_de()),
         0x6: ('expire_time',date_de()),
         0x7: ('imageid',int_de()),
-        0x8: ('level',short_de()),
+        0x8: ('level',short_de()),      #size = 2
         0x9: ('flags',int_de()),
         0xFFFF: (None,None),
         }
@@ -215,20 +216,20 @@ Notes:
 
     format = {
         0x0: ('ignored',null_de()),
-        0x1: ('uuid',ascii_de()),
-        0x2: ('groupid',int_de()),
-        0x3: ('imageid',int_de()),
-        0x4: ('title',string_de()),
+        0x1: ('uuid',ascii_de()),        #size = 16 
+        0x2: ('groupid',int_de()),       #size = 4
+        0x3: ('imageid',int_de()),       #why size = 4??
+        0x4: ('title',string_de()),      #syze = len+1
         0x5: ('url',string_de()),
         0x6: ('username',string_de()),
         0x7: ('password',string_de()),
         0x8: ('notes',string_de()),
-        0x9: ('creation_time',date_de()),
+        0x9: ('creation_time',date_de()), #size = 5 ?? always
         0xa: ('last_mod_time',date_de()),
         0xb: ('last_acc_time',date_de()),
         0xc: ('expiration_time',date_de()),
         0xd: ('binary_desc',string_de()),
-        0xe: ('binary_data',shunt_de()),
+        0xe: ('binary_data',shunt_de()),  #size ??  if None = 0?
         0xFFFF: (None,None),
         }
 

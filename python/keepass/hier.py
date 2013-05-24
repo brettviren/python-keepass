@@ -69,10 +69,11 @@ class FindGroupNode(object):
     '''Return the node holding the group of the given name.  If name
     has any slashes it will be interpreted as a path ending in that
     group'''
-    def __init__(self,path):
+    def __init__(self,path, stop_on_first = True):
         self._collected = []
         self.best_match = None
         self.path = path2list(path)
+        self.stop_on_first = stop_on_first
         print 'Finding path',path
         return
 
@@ -87,7 +88,7 @@ class FindGroupNode(object):
             return (None,None)
 
         top_name = self.path[0]
-        obj_name = group.name()
+        obj_name = node.group.name()
 
         groupid = node.group.groupid
         print self.path,obj_name,groupid
@@ -300,7 +301,7 @@ def walk(node,walker):
     if value is not None or bail: return value
 
     for sn in node.nodes:
-        value,bail = walk(sn,walker)
+        value = bail = walk(sn,walker)
         if value is not None: return value
         continue
     return None    
@@ -336,6 +337,16 @@ def mkdir(top,path):
             new_group.group_name = group_name
             new_group.imageid = 1
             new_group.level = pathlen
+            new_group.order = [(1, 4), 
+			       (2, len(new_group.group_name) + 1), 
+			       (3, 5), 
+			       (4, 5), 
+			       (5, 5), 
+			       (6, 5), 
+			       (7, 4), 
+			       (8, 2), 
+			       (9, 4), 
+			       (65535, 0)]
             pathlen += 1
             
             new_node = hier.Node(new_group)
