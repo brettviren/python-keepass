@@ -13,6 +13,7 @@ Classes and functions for the GroupInfo and EntryInfo blocks of a keepass file
 
 import struct
 import sys
+import datetime
 
 # return tupleof (decode,encode) functions
 
@@ -169,7 +170,7 @@ Notes:
         0x5: ('lastacc_time',date_de()),
         0x6: ('expire_time',date_de()),
         0x7: ('imageid',int_de()),
-        0x8: ('level',short_de()),      #size = 2
+        0x8: ('level',short_de()),
         0x9: ('flags',int_de()),
         0xFFFF: (None,None),
         }
@@ -181,6 +182,24 @@ Notes:
     def name(self):
         'Return the group_name'
         return self.group_name
+      
+    def make_group(self,top, group_name, pathlen):
+       new_group = GroupInfo()
+       new_group.groupid = top.gen_groupid()
+       new_group.group_name = group_name
+       new_group.imageid = 1
+       new_group.level = pathlen
+       new_group.order = [(1, 4), 
+			   (2, len(new_group.group_name) + 1), 
+			   (3, 5), 
+			   (4, 5), 
+			   (5, 5), 
+			   (6, 5), 
+			   (7, 4), 
+			   (8, 2), 
+			   (9, 4), 
+			   (65535, 0)]
+       return new_group
 
     pass
 
@@ -216,20 +235,20 @@ Notes:
 
     format = {
         0x0: ('ignored',null_de()),
-        0x1: ('uuid',ascii_de()),        #size = 16 
-        0x2: ('groupid',int_de()),       #size = 4
-        0x3: ('imageid',int_de()),       #why size = 4??
-        0x4: ('title',string_de()),      #syze = len+1
+        0x1: ('uuid',ascii_de()),
+        0x2: ('groupid',int_de()),
+        0x3: ('imageid',int_de()),
+        0x4: ('title',string_de()),
         0x5: ('url',string_de()),
         0x6: ('username',string_de()),
         0x7: ('password',string_de()),
         0x8: ('notes',string_de()),
-        0x9: ('creation_time',date_de()), #size = 5 ?? always
+        0x9: ('creation_time',date_de()),
         0xa: ('last_mod_time',date_de()),
         0xb: ('last_acc_time',date_de()),
         0xc: ('expiration_time',date_de()),
         0xd: ('binary_desc',string_de()),
-        0xe: ('binary_data',shunt_de()),  #size ??  if None = 0?
+        0xe: ('binary_data',shunt_de()),
         0xFFFF: (None,None),
         }
 
@@ -240,6 +259,41 @@ Notes:
     def name(self):
         'Return the title'
         return self.title
-
+      
+    def make_entry(self,node,title,username,password,url="",notes="",imageid=1,uuid="00000000000000000000000000000000"):
+        new_entry = EntryInfo()
+        new_entry.uuid = uuid
+        new_entry.groupid = node.group.groupid
+        new_entry.imageid = imageid
+        new_entry.title = title
+        new_entry.url = url
+        new_entry.username = username
+        new_entry.password = password
+        new_entry.notes = notes
+        new_entry.creation_time = datetime.datetime.now() 
+        new_entry.last_mod_time = datetime.datetime.now() 
+        new_entry.last_acc_time = datetime.datetime.now() 
+        new_entry.expiration_time = datetime.datetime.now() 
+        new_entry.binary_desc = "bin-stream"
+        new_entry.binary_data = None
+        new_entry.order = [(1, 16), 
+			   (2, 4), 
+			   (3, 4), 
+			   (4, len(title) + 1), 
+			   (5, len(url) + 1), 
+			   (6, len(username) + 1), 
+			   (7, len(password) + 1), 
+			   (8, len(notes) + 1), 
+			   (9, 5), 
+			   (10, 5), 
+			   (11, 5), 
+			   (12, 5), 
+			   (13, len(new_entry.binary_desc) + 1), 
+			   (14, 0), 
+			   (65535, 0)]
+        #new_entry.None = None
+        #fixme, deal with times
+        return new_entry
+      
     pass
 

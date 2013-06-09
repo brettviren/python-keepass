@@ -331,22 +331,8 @@ def mkdir(top,path):
         node = fg.best_match
         pathlen -= len(fg.path)
         for group_name in fg.path:
-            # fixme, this should be moved into a new constructor
-            new_group = infoblock.GroupInfo()
-            new_group.groupid = top.gen_groupid()
-            new_group.group_name = group_name
-            new_group.imageid = 1
-            new_group.level = pathlen
-            new_group.order = [(1, 4), 
-			       (2, len(new_group.group_name) + 1), 
-			       (3, 5), 
-			       (4, 5), 
-			       (5, 5), 
-			       (6, 5), 
-			       (7, 4), 
-			       (8, 2), 
-			       (9, 4), 
-			       (65535, 0)]
+            new_group = infoblock.GroupInfo().make_group(top, group_name, pathlen)
+            
             pathlen += 1
             
             new_node = hier.Node(new_group)
