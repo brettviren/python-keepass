@@ -309,8 +309,8 @@ class Database(object):
         "Generate 4 bytes of randomness suitable for a group's unique group id"
         while True:
             uuid = random.randint(10000000, 99999999)
-            for e in self.entries:
-                if e.uuid == uuid:
+            for g in self.groups:
+                if g.groupid == uuid:
                     break
             else:
                 return uuid
