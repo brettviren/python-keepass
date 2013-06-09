@@ -16,7 +16,7 @@ read(filename)
 update(first, second=None)
   update_by_hierarchy(hierarchy)
   update_by_lists(groups,entries)
-update_entry(title,username,url,notes="",new_title=None,new_username=None,new_password=None,new_url=None,new_notes=None)
+update_entry(title,username,url,new_title=None,new_username=None,new_password=None,new_url=None,new_notes=None)
 add_entry(path,title,username,password,url="",notes="",imageid=1,append=True)
 remove_entry(username, url)
 remove_group(path, level=None)
@@ -32,6 +32,7 @@ write(filename,masterkey="")
 
 import sys, struct, os
 import datetime
+import random
 
 from header import DBHDR
 from infoblock import GroupInfo, EntryInfo
@@ -296,13 +297,25 @@ class Database(object):
 
     def gen_uuid(self):
         "Generate 16 bytes of randomness suitable for an entry's UUID"
-        return 4                # only call once
+        while True:
+            uuid = random.randint(10000000000000000000000000000000, 99999999999999999999999999999999)
+            for e in self.entries:
+                if e.uuid == uuid:
+                    break
+            else:
+                return uuid
 
     def gen_groupid(self):
         "Generate 4 bytes of randomness suitable for a group's unique group id"
-        return 4                # only call once
+        while True:
+            uuid = random.randint(10000000, 99999999)
+            for e in self.entries:
+                if e.uuid == uuid:
+                    break
+            else:
+                return uuid
       
-    def update_entry(self,title,username,url,notes="",new_title=None,new_username=None,new_password=None,new_url=None,new_notes=None):
+    def update_entry(self,title,username,url,new_title=None,new_username=None,new_password=None,new_url=None,new_notes=None):
         for entry in self.entries:
             if entry.title == str(title) and entry.username == str(username) and entry.url == str(url):
                 if new_title: entry.title = new_title
@@ -323,53 +336,21 @@ class Database(object):
         top = self.hierarchy()
         node = hier.mkdir(top,path)
 
-        # fixme, this should probably be moved into a new constructor
-        def make_entry():
-            new_entry = infoblock.EntryInfo()
-            new_entry.uuid = "00000000000000000000000000000000"#str(self.gen_uuid())
-            new_entry.groupid = node.group.groupid
-            new_entry.imageid = imageid
-            new_entry.title = title
-            new_entry.url = url
-            new_entry.username = username
-            new_entry.password = password
-            new_entry.notes = notes
-            new_entry.creation_time = datetime.datetime.now() 
-            new_entry.last_mod_time = datetime.datetime.now() 
-            new_entry.last_acc_time = datetime.datetime.now() 
-            new_entry.expiration_time = datetime.datetime.now() 
-            new_entry.binary_desc = "bin-stream"
-            new_entry.binary_data = None
-            new_entry.order = [(1, 16), 
-			       (2, 4), 
-			       (3, 4), 
-			       (4, len(title) + 1), 
-			       (5, len(url) + 1), 
-			       (6, len(username) + 1), 
-			       (7, len(password) + 1), 
-			       (8, len(notes) + 1), 
-			       (9, 5), 
-			       (10, 5), 
-			       (11, 5), 
-			       (12, 5), 
-			       (13, len(new_entry.binary_desc) + 1), 
-			       (14, 0), 
-			       (65535, 0)]
-            #new_entry.None = None
-            #fixme, deal with times
-            return new_entry
+        uuid = str(self.gen_uuid())
+
+        new_entry = infoblock.EntryInfo().make_entry(node,title,username,password,url,notes,imageid,uuid)
 
         if append:
-            self.entries.append(make_entry())
+            self.entries.append(new_entry)
             return
 
         for ent in self.entries:
             if ent.title != title: continue
             if ent.username != username: continue
-            ent = make_entry()
+            ent = new_entry
             return
 
-        self.entries.append(make_entry())
+        self.entries.append(new_entry)
 
     def remove_entry(self, username, url):
         for entry in self.entries:
