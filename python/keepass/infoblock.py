@@ -165,9 +165,9 @@ Notes:
         0x1: ('groupid',int_de()),
         0x2: ('group_name',string_de()),
         0x3: ('creation_time',date_de()),
-        0x4: ('lastmod_time',date_de()),
-        0x5: ('lastacc_time',date_de()),
-        0x6: ('expire_time',date_de()),
+        0x4: ('last_mod_time',date_de()),
+        0x5: ('last_acc_time',date_de()),
+        0x6: ('expiration_time',date_de()),
         0x7: ('imageid',int_de()),
         0x8: ('level',short_de()),      #size = 2
         0x9: ('flags',int_de()),
