@@ -45,7 +45,6 @@ def date_de():
         hour = ((b[2] & 0b1)      << 4) | (b[3] >> 4);
         min  = ((b[3] & 0b1111)   << 2) | (b[4] >> 6);
         sec  = ((b[4] & 0b111111));
-        #print 'dateify:',b,buf,year, mon, day, hour, min, sec
         return datetime(year, mon, day, hour, min, sec)
 
     def encode(val):
@@ -100,8 +99,6 @@ class InfoBase(object):
                     (msg,typ,siz,self.format[typ],buf)
                 raise struct.error,msg
 
-            #print '%s: type = %d[%d] -> %s buf = "%s" value = %s'%\
-            #    (name,typ,siz,self.format[typ],buf,str(value))
             self.__dict__[name] = value
             continue
         return

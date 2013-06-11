@@ -113,7 +113,6 @@ class Database(object):
         import hashlib
         if self.header.contents_hash != hashlib.sha256(payload).digest():
             raise ValueError, "Decryption failed. The file checksum did not match."
-        print "Decryption failed. The file checksum did not match."
 
         return payload
 
@@ -125,7 +124,6 @@ class Database(object):
         payload = cipher.decrypt(payload)
         extra = ord(payload[-1])
         payload = payload[:len(payload)-extra]
-        print 'Unpadding payload by',extra
         return payload
 
     def encrypt_payload(self, payload, finalkey, enctype, iv):
@@ -142,7 +140,6 @@ class Database(object):
         length = len(payload)
         encsize = (length/AES.block_size+1)*16
         padding = encsize - length
-        print 'Padding payload by',padding
         for ind in range(padding):
             payload += chr(padding)
         return cipher.encrypt(payload)
@@ -231,11 +228,8 @@ class Database(object):
             n = Node(group)
             node_by_id[group.groupid] = n
 
-            #print group.group_name,group.level,group.groupid,breadcrumb[-1].level()
-
             while group.level - breadcrumb[-1].level() != 1:
                 pn = breadcrumb.pop()
-                #print '\tpopped node:',pn.name()
                 continue
 
             breadcrumb[-1].nodes.append(n)

@@ -77,29 +77,24 @@ class FindGroupNode(object):
         self.best_match = None
         self.path = path2list(path)
         self.stop_on_first = stop_on_first
-        print 'Finding path',path
         return
 
     def __call__(self,node):
         if not self.path: 
-            print 'Bailing, no path'
             return (None,True)
         if not node.group:
             if self.path[0] == "" or self.path[0] == "None" or self.path[0] is None:
                 self.path.pop(0)
-            print 'Skipping node with null group.'
             return (None,None)
 
         top_name = self.path[0]
         obj_name = node.group.name()
 
         groupid = node.group.groupid
-        print self.path,obj_name,groupid
 
         from infoblock import GroupInfo
 
         if top_name != obj_name:
-            print top_name,'!=',obj_name
             return (None,True) # bail on the current node
 
         self.best_match = node
@@ -180,7 +175,6 @@ class PathVisitor(Visitor):
 
         groupid = None
         if g_or_e: groupid = g_or_e.groupid
-        #print self.path,obj_name,groupid
 
         from infoblock import GroupInfo
 
@@ -320,13 +314,11 @@ def mkdir(top, path, gen_groupid):
 
     path = path2list(path)
     pathlen = len(path)
-    print 'mkdir',path
 
     fg = FindGroupNode(path)
     node = walk(top,fg)
 
     if not node:                # make remaining intermediate folders
-        print 'Remaining folders to make:',fg.path
         node = fg.best_match or top
         pathlen -= len(fg.path)
         for group_name in fg.path:
