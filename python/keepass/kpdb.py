@@ -302,7 +302,7 @@ class Database(object):
             new_entry.last_mod_time = datetime.datetime.now() 
             new_entry.last_acc_time = datetime.datetime.now() 
             new_entry.expiration_time = datetime.datetime(2999, 12, 28, 23, 59, 59) # KeePassX 0.4.3 default
-            new_entry.binary_desc = "bin-stream"
+            new_entry.binary_desc = ""
             new_entry.binary_data = None
             new_entry.order = [(1, 16), 
 			       (2, 4), 
