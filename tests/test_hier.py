@@ -1,18 +1,18 @@
-#!/usr/bin/env python
+from keepass import hier
 
-import sys,os
-try:
-    from keepass import hier
-except ImportError:
-    path = os.path.dirname(os.path.dirname(__file__))
-    path = os.path.join('python')
-    sys.path.append(path)
-    from keepass import hier
+class GroupIDGenerator(object):
+    def __init__(self):
+        self.groupid = 0
+    
+    def gen_groupid(self):
+        self.groupid += 1
+        return self.groupid
 
-top = hier.Node()
-hier.mkdir(top,'SubDir/SubSubDir')
-dumper = hier.NodeDumper()
-hier.walk(top,dumper)
+def test_hierarchy():
+    top = hier.Node()
+    hier.mkdir(top, 'SubDir/SubSubDir', GroupIDGenerator().gen_groupid)
+    dumper = hier.NodeDumper()
+    hier.walk(top,dumper)
 
 
 # filename = sys.argv[1]
