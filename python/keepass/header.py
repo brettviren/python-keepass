@@ -44,6 +44,8 @@ Notes:
 # Free Software Foundation; either version 2, or (at your option) any
 # later version.
 
+import Crypto.Random
+
 class DBHDR(object):
     '''
     Interface to the database header chunk.
@@ -76,9 +78,23 @@ class DBHDR(object):
 
     def __init__(self,buf=None):
         'Create a header, read self from binary string if given'
-        if buf: self.decode(buf)
-        return
-
+        if buf:
+            self.decode(buf)
+        else:
+            self.signature1, self.signature2 = self.signatures
+            # defaults taken from a file generated with KeePassX 0.4.3 on default settings
+            self.version = 0x30002
+            self.flags = 3 # SHA2 hashing, AES encryption
+            self.key_enc_rounds = 50000
+            self.reset_random_fields()
+    
+    def reset_random_fields(self):
+        rng = Crypto.Random.new()
+        self.encryption_iv  = rng.read(16)
+        self.master_seed    = rng.read(16)
+        self.master_seed2   = rng.read(32)
+        rng.close()
+    
     def __str__(self):
         ret = ['Header:']
         for field in DBHDR.format:

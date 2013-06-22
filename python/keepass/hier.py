@@ -10,6 +10,8 @@ Classes to construct a hiearchy holding infoblocks.
 # Free Software Foundation; either version 2, or (at your option) any
 # later version.
 
+import datetime
+
 def path2list(path):
     '''
     Maybe convert a '/' separated string into a list.
@@ -61,9 +63,10 @@ class NodeDumper(Walker):
     def __call__(self,node):
         if not node.group:
             print 'Top'
-            return
-        print '  '*node.level*2,node.group.name(),node.group.groupid,\
+            return None, False
+        print '  '*node.level()*2,node.group.name(),node.group.groupid,\
             len(node.entries),len(node.nodes)
+        return None, False
 
 class FindGroupNode(object):
     '''Return the node holding the group of the given name.  If name
@@ -74,29 +77,24 @@ class FindGroupNode(object):
         self.best_match = None
         self.path = path2list(path)
         self.stop_on_first = stop_on_first
-        print 'Finding path',path
         return
 
     def __call__(self,node):
         if not self.path: 
-            print 'Bailing, no path'
             return (None,True)
         if not node.group:
             if self.path[0] == "" or self.path[0] == "None" or self.path[0] is None:
                 self.path.pop(0)
-            print 'Skipping node with null group.'
             return (None,None)
 
         top_name = self.path[0]
         obj_name = node.group.name()
 
         groupid = node.group.groupid
-        print self.path,obj_name,groupid
 
         from infoblock import GroupInfo
 
         if top_name != obj_name:
-            print top_name,'!=',obj_name
             return (None,True) # bail on the current node
 
         self.best_match = node
@@ -177,7 +175,6 @@ class PathVisitor(Visitor):
 
         groupid = None
         if g_or_e: groupid = g_or_e.groupid
-        #print self.path,obj_name,groupid
 
         from infoblock import GroupInfo
 
@@ -305,38 +302,37 @@ def walk(node,walker):
         if value is not None: return value
         continue
     return None    
-    
 
-def groupid(top):
-    'Return group ID unique to groups in nodes below top'
-    
-    
-
-def mkdir(top,path):
+def mkdir(top, path, gen_groupid):
     '''
     Starting at given top node make nodes and groups to satisfy the
     given path, where needed.  Return the node holding the leaf group.
+    
+    @param gen_groupid: Group ID factory from kpdb.Database instance.
     '''
     import infoblock
 
     path = path2list(path)
     pathlen = len(path)
-    print 'mkdir',path
 
     fg = FindGroupNode(path)
     node = walk(top,fg)
 
     if not node:                # make remaining intermediate folders
-        print 'Remaining folders to make:',fg.path
-        node = fg.best_match
+        node = fg.best_match or top
         pathlen -= len(fg.path)
         for group_name in fg.path:
             # fixme, this should be moved into a new constructor
             new_group = infoblock.GroupInfo()
-            new_group.groupid = top.gen_groupid()
+            new_group.groupid = gen_groupid()
             new_group.group_name = group_name
             new_group.imageid = 1
+            new_group.creation_time = datetime.datetime.now() 
+            new_group.last_mod_time = datetime.datetime.now() 
+            new_group.last_acc_time = datetime.datetime.now() 
+            new_group.expiration_time = datetime.datetime(2999, 12, 28, 23, 59, 59) # KeePassX 0.4.3 default
             new_group.level = pathlen
+            new_group.flags = 0
             new_group.order = [(1, 4), 
 			       (2, len(new_group.group_name) + 1), 
 			       (3, 5), 
@@ -349,7 +345,7 @@ def mkdir(top,path):
 			       (65535, 0)]
             pathlen += 1
             
-            new_node = hier.Node(new_group)
+            new_node = Node(new_group)
             node.nodes.append(new_node)
             
             node = new_node
@@ -357,6 +353,3 @@ def mkdir(top,path):
             continue
         pass
     return node
-    
-
-    
