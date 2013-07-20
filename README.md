@@ -1,8 +1,9 @@
 # keepassc and python-keepass
 
 This provides command line and Python interfaces for operating on
-files in KeePass format v3 (used by [KeePass](http://keepass.info/) 1.x,
-and [KeePassX](http://www.keepassx.org/)).
+files in KeePass format v3 (used by [KeePass](http://keepass.info/)
+1.x, and [KeePassX](http://www.keepassx.org/)).  Note, this is not the
+format used by the KeePass application version 2.x.
 
 ## Notes of caution
 
@@ -25,7 +26,7 @@ and correctness limitations:
 
  * Key files are not currently supported.
 
-## Prerequisites 
+## Prerequisites and Installation
 
 You will need to install the python-crypto package (providing the
 "Crypto" module).  On a well behaved system do:
@@ -33,6 +34,16 @@ You will need to install the python-crypto package (providing the
 ```shell
 sudo apt-get install python-crypto
 ```
+
+If installing into a [virtualenv](http://www.virtualenv.org) this prerequisite will be installed for you:
+
+```shell
+virtualenv /path/to/venv
+source /path/to/venv/bin/activate
+cd python-keepass
+python setup.py install
+```
+
 
 ## Command line
 

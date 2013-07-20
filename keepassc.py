@@ -7,6 +7,7 @@
 # Free Software Foundation; either version 2, or (at your option) any
 # later version.
 
+import sys
 from keepass import cli
 
 cliobj = cli.Cli(sys.argv[1:])
