@@ -21,9 +21,11 @@ General structure:
 import sys, struct, os
 import random
 from copy import copy
+import datetime
 
 from header import DBHDR
 from infoblock import GroupInfo, EntryInfo
+import hier
 
 class Database(object):
     '''
@@ -269,7 +271,7 @@ class Database(object):
             if groupid not in existing_groupids:
                 return groupid
     
-    def update_entry(self,title,username,url,notes="",new_title=None,new_username=None,new_password=None,new_url=None,new_notes=None):
+    def update_entry(self,title,username,url,notes="",new_title="",new_username="",new_password="",new_url="",new_notes=""):
         for entry in self.entries:
             if entry.title == str(title) and entry.username == str(username) and entry.url == str(url):
                 if new_title: entry.title = new_title
@@ -277,7 +279,7 @@ class Database(object):
                 if new_password: entry.password = new_password
                 if new_url: entry.url = new_url
                 if new_notes: entry.notes = new_notes
-                entry.new_entry.last_mod_time = datetime.datetime.now()
+                entry.last_mod_time = datetime.datetime.now()
         self.generate_contents_hash()
 
     def add_entry(self,path,title,username,password,url="",notes="",imageid=1):
@@ -286,16 +288,28 @@ class Database(object):
         append is False a pre-existing entry that matches path, title
         and username will be overwritten with the new one.
         '''
-        import hier, infoblock
 
         top = self.hierarchy()
         node = hier.mkdir(top, path, self.gen_groupid(), self.groups, self.header)
         
-        new_entry = infoblock.EntryInfo().make_entry(node,title,username,password,url,notes,imageid)
+        new_entry = EntryInfo().make_entry(node,title,username,password,url,notes,imageid)
 
         self.entries.append(new_entry)
         self.header.nentries += 1
 
+        self.generate_contents_hash()
+
+    def update_group(self, group_name="", groupid="", pathlen="", new_group_name="", new_groupid="", new_pathlen=""):
+        for group in self.groups:
+            if (group_name and group.group_name == group_name) and (groupid and group.groupid == groupid) and (pathlen and group.level == pathlen):
+                if new_group_name: group.group_name = new_group_name
+                if new_groupid: group.groupid = new_groupid
+                if new_pathlen: group.pathlen = new_pathlen
+                group.last_mod_time = datetime.datetime.now()
+        self.generate_contents_hash()
+
+    def add_group(self, path):
+        hier.mkdir(self.hierarchy(), path, self.gen_groupid(), self.groups, self.header)
         self.generate_contents_hash()
 
     def remove_entry(self, username, url):
