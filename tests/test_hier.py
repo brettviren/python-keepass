@@ -1,5 +1,11 @@
 from keepass import hier
 
+groups = []
+
+class Header():
+    def __init__(self):
+        self.ngroups = 0
+
 class GroupIDGenerator(object):
     def __init__(self):
         self.groupid = 0
@@ -10,7 +16,7 @@ class GroupIDGenerator(object):
 
 def test_hierarchy():
     top = hier.Node()
-    hier.mkdir(top, 'SubDir/SubSubDir', GroupIDGenerator().gen_groupid)
+    hier.mkdir(top, 'SubDir/SubSubDir', GroupIDGenerator().gen_groupid, groups, Header())
     dumper = hier.NodeDumper()
     hier.walk(top,dumper)
 
