@@ -19,8 +19,6 @@ General structure:
 # later version.
 
 import sys, struct, os
-import datetime
-import uuid
 import random
 from copy import copy
 
@@ -286,54 +284,18 @@ class Database(object):
 
         top = self.hierarchy()
         node = hier.mkdir(top, path, self.gen_groupid)
-
-        # fixme, this should probably be moved into a new constructor
-        def make_entry():
-            new_entry = infoblock.EntryInfo()
-            new_entry.uuid = uuid.uuid4().hex
-            new_entry.groupid = node.group.groupid
-            new_entry.imageid = imageid
-            new_entry.title = title
-            new_entry.url = url
-            new_entry.username = username
-            new_entry.password = password
-            new_entry.notes = notes
-            new_entry.creation_time = datetime.datetime.now() 
-            new_entry.last_mod_time = datetime.datetime.now() 
-            new_entry.last_acc_time = datetime.datetime.now() 
-            new_entry.expiration_time = datetime.datetime(2999, 12, 28, 23, 59, 59) # KeePassX 0.4.3 default
-            new_entry.binary_desc = ""
-            new_entry.binary_data = None
-            new_entry.order = [(1, 16), 
-			       (2, 4), 
-			       (3, 4), 
-			       (4, len(title) + 1), 
-			       (5, len(url) + 1), 
-			       (6, len(username) + 1), 
-			       (7, len(password) + 1), 
-			       (8, len(notes) + 1), 
-			       (9, 5), 
-			       (10, 5), 
-			       (11, 5), 
-			       (12, 5), 
-			       (13, len(new_entry.binary_desc) + 1), 
-			       (14, 0), 
-			       (65535, 0)]
-            #new_entry.None = None
-            #fixme, deal with times
-            return new_entry
         
         existing_node_updated = False
         if not append:
             for i, ent in enumerate(node.entries):
                 if ent.title != title: continue
                 if ent.username != username: continue
-                node.entries[i] = make_entry()
+                node.entries[i] = infoblock.EntryInfo().make_entry(node,title,username,password,url,notes,imageid)
                 existing_node_updated = True
                 break
         
         if not existing_node_updated:
-            node.entries.append(make_entry())
+            node.entries.append(infoblock.EntryInfo().make_entry(node,title,username,password,url,notes,imageid))
         
         self.update_by_hierarchy(top)
 

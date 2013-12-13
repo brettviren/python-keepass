@@ -13,6 +13,8 @@ Classes and functions for the GroupInfo and EntryInfo blocks of a keepass file
 
 import struct
 import sys
+import datetime
+import uuid
 
 # return tupleof (decode,encode) functions
 
@@ -171,13 +173,36 @@ Notes:
         0xFFFF: (None,None),
         }
 
-    def __init__(self,string=None):
-        super(GroupInfo,self).__init__(GroupInfo.format,string)
+    def __init__(self, string=None):
+        super(GroupInfo,self).__init__(GroupInfo.format, string)
         return
 
     def name(self):
         'Return the group_name'
         return self.group_name
+    
+    def make_group(self, group_name, pathlen, gen_groupid):
+        new_group = GroupInfo()
+        new_group.groupid = gen_groupid
+        new_group.group_name = group_name
+        new_group.imageid = 1
+        new_group.creation_time = datetime.datetime.now() 
+        new_group.last_mod_time = datetime.datetime.now() 
+        new_group.last_acc_time = datetime.datetime.now() 
+        new_group.expiration_time = datetime.datetime(2999, 12, 28, 23, 59, 59) # KeePassX 0.4.3 default
+        new_group.level = pathlen
+        new_group.flags = 0
+        new_group.order = [(1, 4),
+                           (2, len(new_group.group_name) + 1),
+                           (3, 5),
+                           (4, 5),
+                           (5, 5),
+                           (6, 5),
+                           (7, 4),
+                           (8, 2),
+                           (9, 4),
+                           (65535, 0)]
+        return new_group
 
     pass
 
@@ -237,6 +262,39 @@ Notes:
     def name(self):
         'Return the title'
         return self.title
+    
+    def make_entry(self,node,title,username,password,url="",notes="",imageid=1):
+        new_entry = EntryInfo()
+        new_entry.uuid = uuid.uuid4().hex
+        new_entry.groupid = node.group.groupid
+        new_entry.imageid = imageid
+        new_entry.title = title
+        new_entry.url = url
+        new_entry.username = username
+        new_entry.password = password
+        new_entry.notes = notes
+        new_entry.creation_time = datetime.datetime.now()
+        new_entry.last_mod_time = datetime.datetime.now()
+        new_entry.last_acc_time = datetime.datetime.now()
+        new_entry.expiration_time = datetime.datetime(2999, 12, 28, 23, 59, 59) # KeePassX 0.4.3 default
+        new_entry.binary_desc = ""
+        new_entry.binary_data = None
+        new_entry.order = [(1, 16),
+                         (2, 4),
+                         (3, 4),
+                         (4, len(title) + 1),
+                         (5, len(url) + 1),
+                         (6, len(username) + 1),
+                         (7, len(password) + 1),
+                         (8, len(notes) + 1),
+                         (9, 5),
+                         (10, 5),
+                         (11, 5),
+                         (12, 5),
+                         (13, len(new_entry.binary_desc) + 1),
+                         (14, 0),
+                         (65535, 0)]
+        return new_entry
 
     pass
 
