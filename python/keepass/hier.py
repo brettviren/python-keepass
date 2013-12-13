@@ -301,7 +301,7 @@ def walk(node,walker):
         continue
     return None    
 
-def mkdir(top, path, gen_groupid):
+def mkdir(top, path, groupid, groups, header):
     '''
     Starting at given top node make nodes and groups to satisfy the
     given path, where needed.  Return the node holding the leaf group.
@@ -320,7 +320,7 @@ def mkdir(top, path, gen_groupid):
         node = fg.best_match or top
         pathlen -= len(fg.path)
         for group_name in fg.path:
-            new_group = infoblock.GroupInfo().make_group(group_name, pathlen, gen_groupid())
+            new_group = infoblock.GroupInfo().make_group(group_name, pathlen, groupid)
             
             pathlen += 1
             
@@ -329,6 +329,8 @@ def mkdir(top, path, gen_groupid):
             
             node = new_node
             group = new_group
+            groups.append(new_group)
+            header.ngroups += 1
             continue
         pass
     return node

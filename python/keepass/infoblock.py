@@ -181,9 +181,9 @@ Notes:
         'Return the group_name'
         return self.group_name
     
-    def make_group(self, group_name, pathlen, gen_groupid):
+    def make_group(self, group_name, pathlen, groupid):
         new_group = GroupInfo()
-        new_group.groupid = gen_groupid
+        new_group.groupid = groupid
         new_group.group_name = group_name
         new_group.imageid = 1
         new_group.creation_time = datetime.datetime.now() 

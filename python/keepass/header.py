@@ -86,6 +86,9 @@ class DBHDR(object):
             self.version = 0x30002
             self.flags = 3 # SHA2 hashing, AES encryption
             self.key_enc_rounds = 50000
+            self.ngroups = 0
+            self.nentries = 0
+            self.contents_hash = ""
             self.reset_random_fields()
     
     def reset_random_fields(self):

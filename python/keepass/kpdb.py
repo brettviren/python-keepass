@@ -38,6 +38,9 @@ class Database(object):
         self.header = DBHDR()
         self.groups = []
         self.entries = []
+        # add basic structure
+        self.add_entry("Internet","Meta-Info","SYSTEM","","$","KPX_CUSTOM_ICONS_4")
+        self.add_entry("eMail","Meta-Info","SYSTEM","","$","KPX_GROUP_TREE_STATE")
         return
 
     def read(self,filename):
@@ -157,28 +160,29 @@ class Database(object):
             payload += entry.encode()
         return payload
 
+    def generate_contents_hash(self):
+        import hashlib
+        self.header.contents_hash = hashlib.sha256(self.encode_payload()).digest()
+
     def write(self,filename,masterkey=""):
         '''' 
         Write out DB to given filename with optional master key.
         If no master key is given, the one used to create this DB is used.
         Resets IVs and master seeds.
         '''
-        import hashlib
+        self.generate_contents_hash()
 
         header = copy(self.header)
         header.ngroups = len(self.groups)
         header.nentries = len(self.entries)
         header.reset_random_fields()
 
-        payload = self.encode_payload()
-        header.contents_hash = hashlib.sha256(payload).digest()
-
         finalkey = self.final_key(masterkey = masterkey or self.masterkey,
                                   masterseed = header.master_seed,
                                   masterseed2 = header.master_seed2,
                                   rounds = header.key_enc_rounds)
 
-        payload = self.encrypt_payload(payload, finalkey, 
+        payload = self.encrypt_payload(self.encode_payload(), finalkey, 
                                        header.encryption_type(),
                                        header.encryption_iv)
 
@@ -233,7 +237,7 @@ class Database(object):
             breadcrumb[-1].nodes.append(n)
             breadcrumb.append(n)
             continue
-
+        
         for ent in self.entries:
             n = node_by_id[ent.groupid]
             n.entries.append(ent)
@@ -250,6 +254,7 @@ class Database(object):
         hier.visit(hierarchy, collector)
         self.groups = collector.groups
         self.entries = collector.entries
+        self.generate_contents_hash()
         return
     
     def gen_groupid(self):
@@ -273,8 +278,9 @@ class Database(object):
                 if new_url: entry.url = new_url
                 if new_notes: entry.notes = new_notes
                 entry.new_entry.last_mod_time = datetime.datetime.now()
+        self.generate_contents_hash()
 
-    def add_entry(self,path,title,username,password,url="",notes="",imageid=1,append=True):
+    def add_entry(self,path,title,username,password,url="",notes="",imageid=1):
         '''
         Add an entry to the current database at with given values.  If
         append is False a pre-existing entry that matches path, title
@@ -283,26 +289,21 @@ class Database(object):
         import hier, infoblock
 
         top = self.hierarchy()
-        node = hier.mkdir(top, path, self.gen_groupid)
+        node = hier.mkdir(top, path, self.gen_groupid(), self.groups, self.header)
         
-        existing_node_updated = False
-        if not append:
-            for i, ent in enumerate(node.entries):
-                if ent.title != title: continue
-                if ent.username != username: continue
-                node.entries[i] = infoblock.EntryInfo().make_entry(node,title,username,password,url,notes,imageid)
-                existing_node_updated = True
-                break
-        
-        if not existing_node_updated:
-            node.entries.append(infoblock.EntryInfo().make_entry(node,title,username,password,url,notes,imageid))
-        
-        self.update_by_hierarchy(top)
+        new_entry = infoblock.EntryInfo().make_entry(node,title,username,password,url,notes,imageid)
+
+        self.entries.append(new_entry)
+        self.header.nentries += 1
+
+        self.generate_contents_hash()
 
     def remove_entry(self, username, url):
         for entry in self.entries:
             if entry.username == str(username) and entry.url == str(url):
                 self.entries.remove(entry)
+                self.header.nentries -= 1
+        self.generate_contents_hash()
 
     def remove_group(self, path, level=None):
         for group in self.groups:
@@ -310,15 +311,19 @@ class Database(object):
                 if level:
                     if group.level == level:
                         self.groups.remove(group)
+                        self.header.ngroups -= 1
                         for entry in self.entries:
                             if entry.groupid == group.groupid:
                                 self.entries.remove(entry)
+                                self.header.nentries -= 1
                 else:
                     self.groups.remove(group)
+                    self.header.ngroups -= 1
                     for entry in self.entries:
                         if entry.groupid == group.groupid:
                             self.entries.remove(entry)
-
+                            self.header.nentries -= 1
+        self.generate_contents_hash()
 
     pass
 
