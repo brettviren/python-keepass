@@ -13,8 +13,10 @@ Classes and functions for the GroupInfo and EntryInfo blocks of a keepass file
 
 import struct
 import sys
-import datetime
+from datetime import datetime
 import uuid
+import six
+from binascii import b2a_hex, a2b_hex
 
 # return tupleof (decode,encode) functions
 
@@ -22,7 +24,6 @@ def null_de(): return (lambda buf:None, lambda val:None)
 def shunt_de(): return (lambda buf:buf, lambda val:val)
 
 def ascii_de():
-    from binascii import b2a_hex, a2b_hex
     return (lambda buf:b2a_hex(buf).replace('\0',''), 
             lambda val:a2b_hex(val)+'\0')
 
@@ -38,7 +39,6 @@ def int_de():
             lambda val:struct.pack("<I", val))
 
 def date_de():
-    from datetime import datetime
     def decode(buf):
         b = struct.unpack('<5B', buf)
         year = (b[0] << 6) | (b[1] >> 2);
@@ -96,10 +96,10 @@ class InfoBase(object):
             if name is None: break
             try:
                 value = decenc[0](buf)
-            except struct.error,msg:
+            except struct.error as msg:
                 msg = '%s, typ = %d[%d] -> %s buf = "%s"'%\
                     (msg,typ,siz,self.format[typ],buf)
-                raise struct.error,msg
+                six.reraise(struct.error,msg)
 
             self.__dict__[name] = value
             continue
@@ -113,7 +113,7 @@ class InfoBase(object):
 
     def encode(self):
         'Return binary string representatoin'
-        string = ""
+        string = b""
         for typ,siz in self.order:
             if typ == 0xFFFF:   # end of block
                 encoded = None
@@ -186,10 +186,10 @@ Notes:
         new_group.groupid = groupid
         new_group.group_name = group_name
         new_group.imageid = 1
-        new_group.creation_time = datetime.datetime.now() 
-        new_group.last_mod_time = datetime.datetime.now() 
-        new_group.last_acc_time = datetime.datetime.now() 
-        new_group.expiration_time = datetime.datetime(2999, 12, 28, 23, 59, 59) # KeePassX 0.4.3 default
+        new_group.creation_time = datetime.now() 
+        new_group.last_mod_time = datetime.now() 
+        new_group.last_acc_time = datetime.now() 
+        new_group.expiration_time = datetime(2999, 12, 28, 23, 59, 59) # KeePassX 0.4.3 default
         new_group.level = pathlen
         new_group.flags = 0
         new_group.order = [(1, 4),
@@ -273,10 +273,10 @@ Notes:
         new_entry.username = username
         new_entry.password = password
         new_entry.notes = notes
-        new_entry.creation_time = datetime.datetime.now()
-        new_entry.last_mod_time = datetime.datetime.now()
-        new_entry.last_acc_time = datetime.datetime.now()
-        new_entry.expiration_time = datetime.datetime(2999, 12, 28, 23, 59, 59) # KeePassX 0.4.3 default
+        new_entry.creation_time = datetime.now()
+        new_entry.last_mod_time = datetime.now()
+        new_entry.last_acc_time = datetime.now()
+        new_entry.expiration_time = datetime(2999, 12, 28, 23, 59, 59) # KeePassX 0.4.3 default
         new_entry.binary_desc = ""
         new_entry.binary_data = None
         new_entry.order = [(1, 16),

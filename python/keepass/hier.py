@@ -10,6 +10,9 @@ Classes to construct a hiearchy holding infoblocks.
 # Free Software Foundation; either version 2, or (at your option) any
 # later version.
 
+from keepass.infoblock import GroupInfo
+import six
+
 def path2list(path):
     '''
     Maybe convert a '/' separated string into a list.
@@ -60,10 +63,10 @@ class Walker(object):
 class NodeDumper(Walker):
     def __call__(self,node):
         if not node.group:
-            print 'Top'
+            six.print_(('Top'))
             return None, False
-        print '  '*node.level()*2,node.group.name(),node.group.groupid,\
-            len(node.entries),len(node.nodes)
+        six.print_(('  '*node.level()*2,node.group.name(),node.group.groupid,\
+            len(node.entries),len(node.nodes)))
         return None, False
 
 class FindGroupNode(object):
@@ -89,8 +92,6 @@ class FindGroupNode(object):
         obj_name = node.group.name()
 
         groupid = node.group.groupid
-
-        from infoblock import GroupInfo
 
         if top_name != obj_name:
             return (None,True) # bail on the current node
@@ -122,7 +123,6 @@ class CollectVisitor(Visitor):
 
     def __call__(self,g_or_e):
         if g_or_e is None: return (None,None)
-        from infoblock import GroupInfo
         if isinstance(g_or_e,GroupInfo):
             self.groups.append(g_or_e)
         else:
@@ -173,8 +173,6 @@ class PathVisitor(Visitor):
 
         groupid = None
         if g_or_e: groupid = g_or_e.groupid
-
-        from infoblock import GroupInfo
 
         if top_name != obj_name:
             if isinstance(g_or_e,GroupInfo):
@@ -308,7 +306,6 @@ def mkdir(top, path, groupid, groups, header):
     
     @param gen_groupid: Group ID factory from kpdb.Database instance.
     '''
-    import infoblock
 
     path = path2list(path)
     pathlen = len(path)
@@ -320,7 +317,7 @@ def mkdir(top, path, groupid, groups, header):
         node = fg.best_match or top
         pathlen -= len(fg.path)
         for group_name in fg.path:
-            new_group = infoblock.GroupInfo().make_group(group_name, pathlen, groupid)
+            new_group = GroupInfo().make_group(group_name, pathlen, groupid)
             
             pathlen += 1
             

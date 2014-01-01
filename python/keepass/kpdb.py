@@ -22,10 +22,13 @@ import sys, struct, os
 import random
 from copy import copy
 import datetime
+import six
+from Crypto.Cipher import AES
+import hashlib
 
-from header import DBHDR
-from infoblock import GroupInfo, EntryInfo
-import hier
+from keepass.header import DBHDR
+from keepass.infoblock import GroupInfo, EntryInfo
+from  keepass import hier
 
 class Database(object):
     '''
@@ -88,8 +91,6 @@ class Database(object):
         '''Munge masterkey into the final key for decryping payload by
         encrypting it for the given number of rounds masterseed2 and
         hashing it with masterseed.'''
-        from Crypto.Cipher import AES
-        import hashlib
 
         key = hashlib.sha256(masterkey).digest()
         cipher = AES.new(masterseed2,  AES.MODE_ECB)
@@ -105,24 +106,21 @@ class Database(object):
         'Decrypt payload (non-header) part of the buffer'
 
         if enctype != 'Rijndael':
-            raise ValueError, 'Unsupported decryption type: "%s"'%enctype
+            six.reraise(ValueError, 'Unsupported decryption type: "%s"'%enctype)
 
         payload = self.decrypt_payload_aes_cbc(payload, finalkey, iv)
         crypto_size = len(payload)
 
         if ((crypto_size > 2147483446) or (not crypto_size and self.header.ngroups)):
-            raise ValueError, "Decryption failed.\nThe key is wrong or the file is damaged"
+            six.reraise(ValueError, "Decryption failed.\nThe key is wrong or the file is damaged")
 
-        import hashlib
         if self.header.contents_hash != hashlib.sha256(payload).digest():
-            raise ValueError, "Decryption failed. The file checksum did not match."
+            six.reraise(ValueError, "Decryption failed. The file checksum did not match.")
 
         return payload
 
     def decrypt_payload_aes_cbc(self, payload, finalkey, iv):
         'Decrypt payload buffer with AES CBC'
-
-        from Crypto.Cipher import AES
         cipher = AES.new(finalkey, AES.MODE_CBC, iv)
         payload = cipher.decrypt(payload)
         extra = ord(payload[-1])
@@ -132,12 +130,11 @@ class Database(object):
     def encrypt_payload(self, payload, finalkey, enctype, iv):
         'Encrypt payload'
         if enctype != 'Rijndael':
-            raise ValueError, 'Unsupported encryption type: "%s"'%enctype
+            six.reraise(ValueError, 'Unsupported encryption type: "%s"'%enctype)
         return self.encrypt_payload_aes_cbc(payload, finalkey, iv)
 
     def encrypt_payload_aes_cbc(self, payload, finalkey, iv):
         'Encrypt payload buffer with AES CBC'
-        from Crypto.Cipher import AES
         cipher = AES.new(finalkey, AES.MODE_CBC, iv)
         # pad out and store amount as last value
         length = len(payload)
@@ -163,7 +160,6 @@ class Database(object):
         return payload
 
     def generate_contents_hash(self):
-        import hashlib
         self.header.contents_hash = hashlib.sha256(self.encode_payload()).digest()
 
     def write(self,filename,masterkey=""):
@@ -216,20 +212,19 @@ class Database(object):
                 if 'group' not in nick: nick = 'group_'+nick
                 dat[nick] = group.__dict__[what]
 
-            print format%dat
+            six.print_((format%dat))
             continue
         return
 
     def hierarchy(self):
         '''Return database with groups and entries organized into a
         hierarchy'''
-        from hier import Node
 
-        top = Node()
+        top = hier.Node()
         breadcrumb = [top]
         node_by_id = {None:top}
         for group in self.groups:
-            n = Node(group)
+            n = hier.Node(group)
             node_by_id[group.groupid] = n
 
             while group.level - breadcrumb[-1].level() != 1:
@@ -251,7 +246,6 @@ class Database(object):
         Update the database using the given hierarchy.  
         This replaces the existing groups and entries.
         '''
-        import hier
         collector = hier.CollectVisitor()
         hier.visit(hierarchy, collector)
         self.groups = collector.groups
@@ -265,7 +259,7 @@ class Database(object):
         """
         existing_groupids = {group.groupid for group in self.groups}
         if len(existing_groupids) >= 0xfffffffe:
-            raise Exception("All groupids are in use!")
+            six.reraise(Exception("All groupids are in use!"))
         while True:
             groupid = random.randint(1, 0xfffffffe) # 0 and 0xffffffff are reserved
             if groupid not in existing_groupids:

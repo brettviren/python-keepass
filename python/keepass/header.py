@@ -45,6 +45,8 @@ Notes:
 # later version.
 
 import Crypto.Random
+import struct
+import six
 
 class DBHDR(object):
     '''
@@ -115,7 +117,6 @@ class DBHDR(object):
 
     def encode(self):
         'Provide binary string representation'
-        import struct
 
         ret = ""
 
@@ -129,7 +130,6 @@ class DBHDR(object):
 
     def decode(self,buf):
         'Fill self from binary string.'
-        import struct
 
         index = 0
 
@@ -146,7 +146,7 @@ class DBHDR(object):
             msg = 'Bad sigs:\n%s %s\n%s %s'%\
                 (DBHDR.signatures[0],DBHDR.signatures[1],
                  self.signature1,self.signature2)
-            raise IOError,msg
+            six.reraise(IOError,msg)
 
         return
 
