@@ -71,7 +71,7 @@ class InfoBase(object):
 
     def __str__(self):
         ret = [self.__class__.__name__ + ':']
-        for num,form in self.format.iteritems():
+        for num,form in six.iteritems(self.format):
             try:
                 value = self.__dict__[form[0]]
             except KeyError:

@@ -10,7 +10,7 @@ Classes to construct a hiearchy holding infoblocks.
 # Free Software Foundation; either version 2, or (at your option) any
 # later version.
 
-from keepass.infoblock import GroupInfo
+from infoblock import GroupInfo
 import six
 
 def path2list(path):

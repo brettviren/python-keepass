@@ -26,9 +26,9 @@ import six
 from Crypto.Cipher import AES
 import hashlib
 
-from keepass.header import DBHDR
-from keepass.infoblock import GroupInfo, EntryInfo
-from keepass import hier
+from header import DBHDR
+from infoblock import GroupInfo, EntryInfo
+import hier
 
 class Database(object):
     '''
