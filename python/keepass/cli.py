@@ -14,7 +14,7 @@ import sys
 import six
 from optparse import OptionParser
 import getpass
-import kpdb
+from keepass import kpdb
 
 class Cli(object):
     '''
