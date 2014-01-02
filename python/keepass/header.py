@@ -133,9 +133,7 @@ class DBHDR(object):
             name,nbytes,typecode = field
             string = buf[index:index+nbytes]
             index += nbytes
-            if six.PY3:
-                string = string.encode()
-            value = struct.unpack('<'+typecode, string)[0]
+            value = struct.unpack(b'<'+typecode, string)[0]
             self.__dict__[name] = value
             continue
 

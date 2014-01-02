@@ -24,11 +24,11 @@ def null_de(): return (lambda buf:None, lambda val:None)
 def shunt_de(): return (lambda buf:buf, lambda val:val)
 
 def ascii_de():
-    return (lambda buf:b2a_hex(buf).replace('\0',''), 
+    return (lambda buf:b2a_hex(buf).replace(b'\0',b''), 
             lambda val:a2b_hex(val)+b'\0')
 
 def string_de():
-    return (lambda buf: buf.replace('\0',''), lambda val: val+'\0')
+    return (lambda buf: buf.replace(b'\0',b''), lambda val: val+b'\0')
 
 def short_de():
     return (lambda buf:struct.unpack("<H", buf)[0],
@@ -120,13 +120,13 @@ class InfoBase(object):
             else:
                 name,decenc = self.format[typ]
                 value = self.__dict__[name]
+                if six.PY3 and isinstance(value, six.string_types):
+                    value = bytes(value, 'utf-8')
                 encoded = decenc[1](value)
                 pass
             buf = struct.pack('<H',typ)
             buf += struct.pack('<I',siz)
             if encoded is not None:
-                if six.PY3 and not isinstance(encoded, six.binary_type):
-                    encoded = bytes(encoded, 'utf-8')
                 buf += struct.pack('<%ds'%siz,encoded)
             string += buf
             continue

@@ -15,7 +15,7 @@ def test_shunt():
     assert enc('foo') is 'foo'
 
 def test_string():
-    strings = ['foo','to encrypt or to decrypt, that is the ?','new\nline']
+    strings = [b'foo',b'to encrypt or to decrypt, that is the ?',b'new\nline']
     dec,enc = ib.string_de()
     for string in strings:
         assert string == dec(enc(string))

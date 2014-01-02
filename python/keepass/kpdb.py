@@ -26,9 +26,9 @@ import six
 from Crypto.Cipher import AES
 import hashlib
 
-from header import DBHDR
-from infoblock import GroupInfo, EntryInfo
-import hier
+from keepass.header import DBHDR
+from keepass.infoblock import GroupInfo, EntryInfo
+from keepass import hier
 
 class Database(object):
     '''
@@ -50,7 +50,7 @@ class Database(object):
 
     def read(self,filename):
         'Read in given .kdb file'
-        fp = open(filename)
+        fp = open(filename, "rb")
         buf = fp.read()
         fp.close()
         
@@ -124,7 +124,10 @@ class Database(object):
         'Decrypt payload buffer with AES CBC'
         cipher = AES.new(finalkey, AES.MODE_CBC, iv)
         payload = cipher.decrypt(payload)
-        extra = ord(payload[-1])
+        if six.PY3:
+            extra = payload[-1]
+        else:
+            extra = ord(payload[-1])
         payload = payload[:len(payload)-extra]
         return payload
 
