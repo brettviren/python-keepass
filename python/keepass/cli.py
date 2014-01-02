@@ -53,7 +53,7 @@ class Cli(object):
             cmd=""
             if argv[0][0] != '-':
                 if argv[0] not in Cli.commands:
-                    six.reraise(ValueError,'Unknown command: "%s"'%argv[0])
+                    raise ValueError('Unknown command: "%s"'%argv[0])
                 cmd = argv.pop(0)
                 pass
             copy = list(argv)

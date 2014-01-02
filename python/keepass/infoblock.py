@@ -25,7 +25,7 @@ def shunt_de(): return (lambda buf:buf, lambda val:val)
 
 def ascii_de():
     return (lambda buf:b2a_hex(buf).replace('\0',''), 
-            lambda val:a2b_hex(val)+'\0')
+            lambda val:a2b_hex(val)+b'\0')
 
 def string_de():
     return (lambda buf: buf.replace('\0',''), lambda val: val+'\0')
@@ -99,7 +99,7 @@ class InfoBase(object):
             except struct.error as msg:
                 msg = '%s, typ = %d[%d] -> %s buf = "%s"'%\
                     (msg,typ,siz,self.format[typ],buf)
-                six.reraise(struct.error,msg)
+                raise struct.error(msg)
 
             self.__dict__[name] = value
             continue
@@ -125,6 +125,8 @@ class InfoBase(object):
             buf = struct.pack('<H',typ)
             buf += struct.pack('<I',siz)
             if encoded is not None:
+                if six.PY3 and not isinstance(encoded, six.binary_type):
+                    encoded = bytes(encoded, 'utf-8')
                 buf += struct.pack('<%ds'%siz,encoded)
             string += buf
             continue
