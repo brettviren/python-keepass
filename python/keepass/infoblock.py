@@ -96,6 +96,15 @@ class InfoBase(object):
             if name is None: break
             try:
                 value = decenc[0](buf)
+                if name in ['group_name',
+                            'title', 
+                            'url',
+                            'username', 
+                            'password',
+                            'notes',
+                            'binary_desc',
+                            'uuid']:
+                    value = value.decode()
             except struct.error as msg:
                 msg = '%s, typ = %d[%d] -> %s buf = "%s"'%\
                     (msg,typ,siz,self.format[typ],buf)
@@ -122,6 +131,8 @@ class InfoBase(object):
                 value = self.__dict__[name]
                 if six.PY3 and isinstance(value, six.string_types):
                     value = bytes(value, 'utf-8')
+                elif isinstance(value, six.string_types):
+                    value = str(value)
                 encoded = decenc[1](value)
                 pass
             buf = struct.pack('<H',typ)
