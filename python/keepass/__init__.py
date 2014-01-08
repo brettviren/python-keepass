@@ -15,7 +15,7 @@ KeePass module
 __author__ = ["Brett Viren", "Jeremy Ehrhardt", "Filipp Frizzy"]
 __copyright__ = ""
 __credits__ = ["Brett Viren", "Jeremy Ehrhardt", "Filipp Frizzy"]
-__license__ = "GPL"
+__license__ = "GPLv2+"
 __version__ = "1.1"
 __maintainer__ = "Filipp Frizzy"
 __email__ = "filipp.s.frizzy@gmail.com"
