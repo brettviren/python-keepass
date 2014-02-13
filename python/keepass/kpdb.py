@@ -357,6 +357,14 @@ class Database(object):
                         if entry.groupid == group.groupid:
                             self.entries.remove(entry)
 
+    def get_entry(self, value):
+        """
+        Get entry by username or title.
+        """
+        for entry in self.entries:
+            if entry.username == str(value) or entry.title == str(value):
+                return entry
+        return None
 
     pass
 

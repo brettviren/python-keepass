@@ -26,3 +26,21 @@ def test_write():
         
     finally:
         shutil.rmtree(tempdir)
+
+def test_get_entry():
+    """
+    Try to get entries.
+    """
+    db = keepass.kpdb.Database()
+    db.add_entry(path='Secrets/Terrible', title='Gonk', username='foo', password='bar', url='https://example.org/')
+    db.add_entry(path='Secrets/Terrible2', title='Gonk2', username='foo2', password='bar2', url='https://example.org/2')
+    db.add_entry(path='Secrets/Terrible3', title='Gonk3', username='foo3', password='bar3', url='https://example.org/3')
+
+    entry = db.get_entry('Gonk4')
+    assert entry == None
+
+    entry = db.get_entry('Gonk2')
+    assert entry.password == 'bar2'
+
+    entry = db.get_entry('foo3')
+    assert entry.password == 'bar3'
