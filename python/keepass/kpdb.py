@@ -261,7 +261,7 @@ class Database(object):
         """
         Generate a new groupid (4-byte value that isn't 0 or 0xffffffff).
         """
-        existing_groupids = {group.groupid for group in self.groups}
+        existing_groupids = set(group.groupid for group in self.groups)
         if len(existing_groupids) >= 0xfffffffe:
             raise Exception("All groupids are in use!")
         while True:
