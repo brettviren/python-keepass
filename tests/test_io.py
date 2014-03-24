@@ -14,15 +14,15 @@ def test_write():
     try:
         db = keepass.kpdb.Database()
         db.add_entry(path='Secrets/Terrible', title='Gonk', username='foo', password='bar', url='https://example.org/')
-        assert len(db.groups)  == 2
-        assert len(db.entries) == 1
+        assert len(db.groups)  == 4
+        assert len(db.entries) == 3
         db.write(kdb_path, password)
         assert os.path.isfile(kdb_path)
         
         db2 = keepass.kpdb.Database(kdb_path, password)
-        assert len(db.groups)  == 2
-        assert len(db.entries) == 1
-        assert db.entries[0].name() == 'Gonk'
+        assert len(db.groups)  == 4
+        assert len(db.entries) == 3
+        assert db.entries[2].name() == 'Gonk'
         
     finally:
         shutil.rmtree(tempdir)

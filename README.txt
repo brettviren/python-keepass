@@ -100,10 +100,6 @@ A big credit is due to rudi & shirou (same hacker?) for the following:
 Looking through KeePass/KeePassX source made my head swim.  Only after
 reviewing their work could I get started.
 
-## See also
-
- * [kppy](https://github.com/raymontag/kppy/) Python interface and [KeepassC](http://raymontag.github.io/keepassc/) command line interface.  
-
 ## License
 
 This package is Free Software licensed to you under the GPL v2 or

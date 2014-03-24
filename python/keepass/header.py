@@ -45,6 +45,8 @@ Notes:
 # later version.
 
 import Crypto.Random
+import struct
+import six
 
 class DBHDR(object):
     '''
@@ -52,17 +54,17 @@ class DBHDR(object):
     '''
 
     format = [
-        ('signature1',4,'I'),
-        ('signature2',4,'I'),
-        ('flags',4,'I'),
-        ('version',4,'I'),
-        ('master_seed',16,'16s'),
-        ('encryption_iv',16,'16s'),
-        ('ngroups',4,'I'),
-        ('nentries',4,'I'),
-        ('contents_hash',32,'32s'),
-        ('master_seed2',32,'32s'),
-        ('key_enc_rounds',4,'I'),
+        ('signature1',4,b'I'),
+        ('signature2',4,b'I'),
+        ('flags',4,b'I'),
+        ('version',4,b'I'),
+        ('master_seed',16,b'16s'),
+        ('encryption_iv',16,b'16s'),
+        ('ngroups',4,b'I'),
+        ('nentries',4,b'I'),
+        ('contents_hash',32,b'32s'),
+        ('master_seed2',32,b'32s'),
+        ('key_enc_rounds',4,b'I'),
         ]
     
     signatures = (0x9AA2D903,0xB54BFB65)
@@ -86,6 +88,9 @@ class DBHDR(object):
             self.version = 0x30002
             self.flags = 3 # SHA2 hashing, AES encryption
             self.key_enc_rounds = 50000
+            self.ngroups = 0
+            self.nentries = 0
+            self.contents_hash = ""
             self.reset_random_fields()
     
     def reset_random_fields(self):
@@ -112,29 +117,23 @@ class DBHDR(object):
 
     def encode(self):
         'Provide binary string representation'
-        import struct
-
-        ret = ""
-
+        ret = b""
         for field in DBHDR.format:
             name,bytes,typecode = field
             value = self.__dict__[name]
-            buf = struct.pack('<'+typecode,value)
+            buf = struct.pack(b'<'+typecode,value)
             ret += buf
             continue
         return ret
 
     def decode(self,buf):
         'Fill self from binary string.'
-        import struct
-
         index = 0
-
         for field in DBHDR.format:
             name,nbytes,typecode = field
             string = buf[index:index+nbytes]
             index += nbytes
-            value = struct.unpack('<'+typecode, string)[0]
+            value = struct.unpack(b'<'+typecode, string)[0]
             self.__dict__[name] = value
             continue
 
@@ -143,7 +142,7 @@ class DBHDR(object):
             msg = 'Bad sigs:\n%s %s\n%s %s'%\
                 (DBHDR.signatures[0],DBHDR.signatures[1],
                  self.signature1,self.signature2)
-            raise IOError,msg
+            raise IOError(msg)
 
         return
 

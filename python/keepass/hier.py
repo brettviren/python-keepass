@@ -10,7 +10,8 @@ Classes to construct a hiearchy holding infoblocks.
 # Free Software Foundation; either version 2, or (at your option) any
 # later version.
 
-import datetime
+from keepass.infoblock import GroupInfo
+import six
 
 def path2list(path):
     '''
@@ -62,10 +63,10 @@ class Walker(object):
 class NodeDumper(Walker):
     def __call__(self,node):
         if not node.group:
-            print 'Top'
+            six.print_(('Top'))
             return None, False
-        print '  '*node.level()*2,node.group.name(),node.group.groupid,\
-            len(node.entries),len(node.nodes)
+        six.print_(('  '*node.level()*2,node.group.name(),node.group.groupid,\
+            len(node.entries),len(node.nodes)))
         return None, False
 
 class FindGroupNode(object):
@@ -91,8 +92,6 @@ class FindGroupNode(object):
         obj_name = node.group.name()
 
         groupid = node.group.groupid
-
-        from infoblock import GroupInfo
 
         if top_name != obj_name:
             return (None,True) # bail on the current node
@@ -124,7 +123,6 @@ class CollectVisitor(Visitor):
 
     def __call__(self,g_or_e):
         if g_or_e is None: return (None,None)
-        from infoblock import GroupInfo
         if isinstance(g_or_e,GroupInfo):
             self.groups.append(g_or_e)
         else:
@@ -175,8 +173,6 @@ class PathVisitor(Visitor):
 
         groupid = None
         if g_or_e: groupid = g_or_e.groupid
-
-        from infoblock import GroupInfo
 
         if top_name != obj_name:
             if isinstance(g_or_e,GroupInfo):
@@ -303,14 +299,13 @@ def walk(node,walker):
         continue
     return None    
 
-def mkdir(top, path, gen_groupid):
+def mkdir(top, path, groupid, groups, header):
     '''
     Starting at given top node make nodes and groups to satisfy the
     given path, where needed.  Return the node holding the leaf group.
     
     @param gen_groupid: Group ID factory from kpdb.Database instance.
     '''
-    import infoblock
 
     path = path2list(path)
     pathlen = len(path)
@@ -322,27 +317,8 @@ def mkdir(top, path, gen_groupid):
         node = fg.best_match or top
         pathlen -= len(fg.path)
         for group_name in fg.path:
-            # fixme, this should be moved into a new constructor
-            new_group = infoblock.GroupInfo()
-            new_group.groupid = gen_groupid()
-            new_group.group_name = group_name
-            new_group.imageid = 1
-            new_group.creation_time = datetime.datetime.now() 
-            new_group.last_mod_time = datetime.datetime.now() 
-            new_group.last_acc_time = datetime.datetime.now() 
-            new_group.expiration_time = datetime.datetime(2999, 12, 28, 23, 59, 59) # KeePassX 0.4.3 default
-            new_group.level = pathlen
-            new_group.flags = 0
-            new_group.order = [(1, 4), 
-			       (2, len(new_group.group_name) + 1), 
-			       (3, 5), 
-			       (4, 5), 
-			       (5, 5), 
-			       (6, 5), 
-			       (7, 4), 
-			       (8, 2), 
-			       (9, 4), 
-			       (65535, 0)]
+            new_group = GroupInfo().make_group(group_name, pathlen, groupid)
+            
             pathlen += 1
             
             new_node = Node(new_group)
@@ -350,6 +326,8 @@ def mkdir(top, path, gen_groupid):
             
             node = new_node
             group = new_group
+            groups.append(new_group)
+            header.ngroups += 1
             continue
         pass
     return node

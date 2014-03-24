@@ -11,6 +11,10 @@ Command line interface to manipulating keepass files
 # later version.
 
 import sys
+import six
+from optparse import OptionParser
+import getpass
+from keepass import kpdb
 
 class Cli(object):
     '''
@@ -49,7 +53,7 @@ class Cli(object):
             cmd=""
             if argv[0][0] != '-':
                 if argv[0] not in Cli.commands:
-                    raise ValueError,'Unknown command: "%s"'%argv[0]
+                    raise ValueError('Unknown command: "%s"'%argv[0])
                 cmd = argv.pop(0)
                 pass
             copy = list(argv)
@@ -79,7 +83,7 @@ class Cli(object):
     def __call__(self):
         'Process commands'
         if not self.command_line:
-            print self._general_op().print_help()
+            six.print_((self._general_op().print_help()))
             return
         for cmd,cmdopts in self.command_line:
             meth = eval('self._%s'%cmd)
@@ -99,7 +103,6 @@ class Cli(object):
 
         execute "help" command for more information.
         '''
-        from optparse import OptionParser
         op = OptionParser(usage=self._general_op.__doc__)
         return op
 
@@ -114,25 +117,24 @@ class Cli(object):
     def _help(self,opts):
         'Print some helpful information'
 
-        print 'Available commands:'
+        six.print_(('Available commands:'))
         for cmd in Cli.commands:
             meth = eval('self._%s'%cmd)
-            print '\t%s: %s'%(cmd,meth.__doc__)
+            six.print_(('\t%s: %s'%(cmd,meth.__doc__)))
             continue
-        print '\nPer-command help:\n'
+        six.print_(('\nPer-command help:\n'))
 
         for cmd in Cli.commands:
             meth = eval('self._%s_op'%cmd)
             op = meth()
             if not op: continue
-            print '%s'%cmd.upper()
+            six.print_(('%s'%cmd.upper()))
             op.print_help()
-            print
+            six.print_(())
             continue
 
     def _open_op(self):
         'open [options] filename'
-        from optparse import OptionParser
         op = OptionParser(usage=self._open_op.__doc__,add_help_option=False)
         op.add_option('-m','--masterkey',type='string',default="",
                       help='Set master key for decrypting file, default: ""')
@@ -141,12 +143,11 @@ class Cli(object):
     def _open(self,opts):
         'Read a file to the in-memory database'
         opts,files = self.ops['open'].parse_args(opts)
-        import kpdb
         # fixme - add support for openning/merging multiple DBs!
         try:
             dbfile = files[0]
         except IndexError:
-            print "No database file specified"
+            six.print_(("No database file specified"))
             sys.exit(1)
         self.db = kpdb.Database(files[0],opts.masterkey)
         self.hier = self.db.hierarchy()
@@ -154,7 +155,6 @@ class Cli(object):
 
     def _save_op(self):
         'save [options] filename'
-        from optparse import OptionParser
         op = OptionParser(usage=self._save_op.__doc__,add_help_option=False)
         op.add_option('-m','--masterkey',type='string',default="",
                       help='Set master key for encrypting file, default: ""')
@@ -169,7 +169,6 @@ class Cli(object):
 
     def _dump_op(self):
         'dump [options] [name|/group/name]'
-        from optparse import OptionParser
         op = OptionParser(usage=self._dump_op.__doc__,add_help_option=False)
         op.add_option('-p','--show-passwords',action='store_true',default=False,
                       help='Show passwords as plain text')
@@ -184,13 +183,12 @@ class Cli(object):
         if not self.hier:
             sys.stderr.write('Can not dump.  No database open.\n')
             return
-        print self.hier
+        six.print_((self.hier))
         #self.hier.dump(opts.format,opts.show_passwords)
         return
         
     def _entry_op(self):
         'entry [options] username [password]'
-        from optparse import OptionParser
         op = OptionParser(usage=self._entry_op.__doc__,add_help_option=False)
         op.add_option('-p','--path',type='string',default='/',
                       help='Set folder path in which to store this entry')
@@ -208,7 +206,6 @@ class Cli(object):
 
     def _entry(self,opts):
         'Add an entry into the database'
-        import getpass
         opts,args = self.ops['entry'].parse_args(opts)
         username = args[0]
         try:
