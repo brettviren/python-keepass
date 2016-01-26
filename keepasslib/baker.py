@@ -235,14 +235,15 @@ class Baker(object):
             # Get the Cmd object for this command
             cmd = self.commands[cmdname]
 
-            # Calculate the padding necessary to fill from the end of the
-            # command name to the documentation margin
-            tab = " " * (rindent - (len(cmdname)+1))
-            file.write(" " + cmdname + tab)
+            file.write(" " + cmdname)
 
             # Get the paragraphs of the command's docstring
             paras = process_docstring(cmd.docstring)
             if paras:
+                # Calculate the padding necessary to fill from the end of the
+                # command name to the documentation margin
+                file.write(" " * (rindent - (len(cmdname)+1)))
+
                 # Print the first paragraph
                 file.write(format_paras([paras[0]], 76, indent=rindent).lstrip())
 
@@ -301,8 +302,6 @@ class Baker(object):
             # a list like [(name, heading), ...]
             heads = []
             for keyname in keynames:
-                if cmd.keywords[keyname] is None: continue
-
                 head = " --" + keyname
                 if keyname in cmd.shortopts:
                     head = " -" + cmd.shortopts[keyname] + head
@@ -409,7 +408,7 @@ class Baker(object):
                 # Process short option(s)
 
                 # For each character after the '-'...
-                for i in xrange(1, len(arg)):
+                for i in range(1, len(arg)):
                     char = arg[i]
                     if char not in shortchars:
                         continue
@@ -569,6 +568,7 @@ class Baker(object):
 
 _baker = Baker()
 command = _baker.command
+commands = _baker.commands
 run = _baker.run
 test = _baker.test
 help = _baker.print_top_help
