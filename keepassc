@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-Command line interface to read keepass files
+Command line interface to read keepass v4 (.kdbx) files
 '''
 import sys
 import os
@@ -29,12 +29,14 @@ def get_masterkey():
 
 
 def open_keepass_db(filename):
-    """Open a keepass database."""
-    from keepasslib import kpdb
+    """Open a keepass database with password."""
+    import libkeepass
     if not os.path.isfile(filename):
         raise baker.CommandError("keepass database %r not found" % filename)
+    if not filename.lower().endswith('.kdbx'):
+        raise baker.CommandError("filename %r has no .kdbx extension for keepass v4 file" % filename)
     print "Opening keepass database", os.path.basename(filename), "..."
-    return kpdb.Database(filename, get_masterkey())
+    return libkeepass.open(filename, password=get_masterkey())
 
 
 shortopts = {'show-passwords': 'p'}
@@ -45,8 +47,10 @@ def dump(dbfile, *dbfiles, **kwargs):
     allfiles = (dbfile,) + dbfiles
     show_passwords = kwargs.get('show-passwords')
     for filename in allfiles:
-        db = open_keepass_db(filename)
-        print db.hierarchy().dump(show_passwords=show_passwords)
+        with open_keepass_db(filename) as db:
+            if not show_passwords:
+                db.protect()
+            print db.pretty_print()
 
 
 @baker.command(default=True, shortopts=shortopts, params=params)
@@ -55,13 +59,65 @@ def search(key, dbfile, *dbfiles, **kwargs):
     allfiles = (dbfile,) + dbfiles
     show_passwords = kwargs.get('show-passwords')
     for filename in allfiles:
-        db = open_keepass_db(filename)
-        for entry in db.search(key, search_passwords=show_passwords, case_insensitive=True):
-            if entry.path().startswith('/Backup'):
-                continue
-            format = "%(path)s%(title)s: user=%(username)r pass=%(password)r notes=%(notes)r"
-            print entry.strformat(format, show_passwords=show_passwords)
+        with open_keepass_db(filename) as db:
+            for entry in db.obj_root.findall('.//Entry'):
+                if entry_matches(entry, key):
+                    print format_entry(entry, show_passwords)
 
+def get_entry_value(entry, key):
+    """Return matching value of given String key."""
+    for node in entry.findall('String'):
+        if node.find('Key').text == key:
+            value = node.find('Value').text
+            return value if value else ''
+    raise KeyError('no key %s in %s' % (key, entry))
+
+
+def get_folder_name(entry):
+    """Return folder name of given entry.
+    The parent XML folder node always has <Name> sibling above the current
+    entry.
+    """
+    for node in entry.itersiblings(preceding=True):
+        if node.tag == u'Name':
+            return node.text
+    raise KeyError('no folder for entry %s' % entry)
+
+
+def entry_matches(entry, substring):
+    """An entry is an lxml node object with the following XML structure:
+    <Entry>
+      <UUID>...</UUID>
+      <String>
+        <Key>Title</Key>
+        <Value>...</Value>
+      </String>
+      <String>
+        <Key>Notes</Key>
+        <Value>...</Value>
+      </String>
+    </Entry>
+
+    We search in the title, notes and folder name for the given substring.
+    The search is case insensitive. Deleted entries in the Backup folder are
+    ignored.
+    """
+    if get_folder_name(entry) == 'Backup':
+        return False
+    key = substring.lower()
+    return key in get_entry_value(entry, 'Title').lower() or \
+           key in get_entry_value(entry, 'Notes').lower() or \
+           key in get_folder_name(entry).lower()
+
+
+def format_entry(entry, show_passwords):
+    title = get_entry_value(entry, 'Title')
+    username = get_entry_value(entry, 'UserName')
+    notes = get_entry_value(entry, 'Notes')
+    password = get_entry_value(entry, 'Password') if show_passwords else ''
+    folder = get_folder_name(entry)
+    template = "%(folder)s/%(title)s: user=%(username)r pass=%(password)r notes=%(notes)r"
+    return template % locals()
 
 try:
     sys.exit(baker.run())

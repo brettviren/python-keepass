@@ -1,6 +1,8 @@
 0.2 (Released xx.xx.2012)
 
   * Search and show path names of entries.
+  * Switch to keepasslib for .kdbx (keepass v4) support.
+    .kdb (keepass v2) support has been removed.
 
 0.1 (released 31.2.2012)
 

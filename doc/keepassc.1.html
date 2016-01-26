@@ -3,13 +3,13 @@
 <HTML><HEAD><TITLE>Man page of KEEPASSC</TITLE>
 </HEAD><BODY>
 <H1>KEEPASSC</H1>
-Section: KeePass commandline client (1)<BR>Updated: June 2012<BR><A HREF="#index">Index</A>
+Section: KeePass commandline client (1)<BR>Updated: Januar 2016<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-keepassc - command line and python interface for KeePass v3 files
+keepassc - command line interface for KeePass v4 (.kdbx) files
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -23,17 +23,21 @@ Several commands and options are available.
 <H3><B>search</B> [<I>options</I>] &lt;<I>key</I>&gt; &lt;<I>dbfile</I>&gt; [...]</H3>
 
 Searches given key in all entries in keepass databases.
+The search is case insensitive and ignores deleted entries in
+the backup folder. For each entry the folder name, title and
+notes are searched.
 <DL COMPACT>
 <DT><B>-p</B>, <B>--show-passwords</B><DD>
-Show passwords as plain text.
+Also show passwords of entries.
 </DL>
 <A NAME="lbAF">&nbsp;</A>
 <H3><B>dump</B> [<I>options</I>] &lt;<I>dbfile</I>&gt; [...]</H3>
 
-Print contents of keepass databases.
+Pretty print contents of keepass databases.
+Output is the underlying XML structure.
 <DL COMPACT>
 <DT><B>-p</B>, <B>--show-passwords</B><DD>
-Show passwords as plain text.
+Show passwords in database dump.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>HELP OPTION</H2>
@@ -52,7 +56,7 @@ Bastian Kleineidam &lt;<A HREF="mailto:calvin@users.sourceforge.net">calvin@user
 <A NAME="lbAI">&nbsp;</A>
 <H2>COPYRIGHT</H2>
 
-Copyright &#169; 2012 Bastian Kleineidam
+Copyright &#169; 2012,2016 Bastian Kleineidam
 <P>
 
 <HR>

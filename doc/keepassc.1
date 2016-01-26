@@ -1,6 +1,6 @@
-.TH KEEPASSC "1" "June 2012" "keepassc" "KeePass commandline client"
+.TH KEEPASSC "1" "Januar 2016" "keepassc" "KeePass commandline client"
 .SH NAME
-keepassc - command line and python interface for KeePass v3 files
+keepassc - command line interface for KeePass v4 (.kdbx) files
 .SH SYNOPSIS
  \fBsearch\fP [\fIoptions\fP] <\fIkey\fP> <\fIdbfile\fP> [...]
  \fBdump\fP [\fIoptions\fP] <\fIdbfile\fP> [...]
@@ -8,14 +8,18 @@ keepassc - command line and python interface for KeePass v3 files
 Several commands and options are available.
 .SS \fBsearch\fP [\fIoptions\fP] <\fIkey\fP> <\fIdbfile\fP> [...]
 Searches given key in all entries in keepass databases.
+The search is case insensitive and ignores deleted entries in
+the backup folder. For each entry the folder name, title and
+notes are searched.
 .TP
 \fB\-p\fP, \fB\-\-show\-passwords\fP
-Show passwords as plain text.
+Also show passwords of entries.
 .SS \fBdump\fP [\fIoptions\fP] <\fIdbfile\fP> [...]
-Print contents of keepass databases.
+Pretty print contents of keepass databases.
+Output is the underlying XML structure.
 .TP
 \fB\-p\fP, \fB\-\-show\-passwords\fP
-Show passwords as plain text.
+Show passwords in database dump.
 .SH HELP OPTION
 Specifying the help option displays help for keepassc itself, or a
 command.
@@ -26,4 +30,4 @@ For example:
 .SH AUTHOR
 Bastian Kleineidam <calvin@users.sourceforge.net>
 .SH COPYRIGHT
-Copyright \(co 2012 Bastian Kleineidam
+Copyright \(co 2012,2016 Bastian Kleineidam
