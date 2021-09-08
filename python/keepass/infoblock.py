@@ -110,7 +110,7 @@ class InfoBase(object):
         return length
 
     def encode(self):
-        'Return binary string representatoin'
+        'Return binary string representation'
         string = ""
         for typ,siz in self.order:
             if typ == 0xFFFF:   # end of block

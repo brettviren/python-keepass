@@ -82,7 +82,7 @@ class Database(object):
         return
 
     def final_key(self,masterkey,masterseed,masterseed2,rounds):
-        '''Munge masterkey into the final key for decryping payload by
+        '''Munge masterkey into the final key for decrypting payload by
         encrypting it for the given number of rounds masterseed2 and
         hashing it with masterseed.'''
         from Crypto.Cipher import AES

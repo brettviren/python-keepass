@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-Classes to construct a hiearchy holding infoblocks.
+Classes to construct a hierarchy holding infoblocks.
 '''
 
 # This file is part of python-keepass and is Copyright (C) 2012 Brett Viren.
@@ -115,7 +115,7 @@ class CollectVisitor(Visitor):
     '''
     A callable visitor that will collect the groups and entries into
     flat lists.  After the descent the results are available in the
-    .groups and .entries data memebers.
+    .groups and .entries data members.
     '''
     def __init__(self):
         self.groups = []
@@ -140,19 +140,19 @@ class PathVisitor(Visitor):
 
     The path is a list of group names with the last element being
     either a group name or an entry title.  The path can be a list
-    object or a string interpreted to be delimited by slashs (think
+    object or a string interpreted to be delimited by slashes (think
     UNIX pathspec).
 
     If stop_on_first is False, the visitor will not abort after the
     first match but will instead keep collecting all matches.  This
     can be used to collect groups or entries that are degenerate in
     their group_name or title, respectively.  After the descent the
-    collected values can be retrived from PathVisitor.results()
+    collected values can be retrieved from PathVisitor.results()
 
     This visitor also maintains a best match.  In the event of failure
     (return of None) the .best_match data member will hold the group
     object that was located where the path diverged from what was
-    found.  The .path data memeber will retain the remain part of the
+    found.  The .path data member will retain the remain part of the
     unmatched path.
     '''
     def __init__(self,path,stop_on_first = True):
@@ -200,7 +200,7 @@ class PathVisitor(Visitor):
 
 class Node(object):
     '''
-    A node in the group hiearchy.  
+    A node in the group hierarchy.  
 
     This basically associates entries to their group
 
