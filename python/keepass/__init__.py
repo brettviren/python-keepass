@@ -10,5 +10,5 @@ KeePass module
 # Free Software Foundation; either version 2, or (at your option) any
 # later version.
 
-# ... even thoough this file is essentially empty....
+# ... even though this file is essentially empty....
 

@@ -142,7 +142,7 @@ class Cli(object):
         'Read a file to the in-memory database'
         opts,files = self.ops['open'].parse_args(opts)
         import kpdb
-        # fixme - add support for openning/merging multiple DBs!
+        # fixme - add support for opening/merging multiple DBs!
         try:
             dbfile = files[0]
         except IndexError:
