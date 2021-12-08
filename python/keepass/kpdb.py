@@ -357,6 +357,9 @@ class Database(object):
                         if entry.groupid == group.groupid:
                             self.entries.remove(entry)
 
-
+    def getEntryByURL(self, url):
+        for entry in self.entries:
+            if str(url) == entry.url:
+                return entry
+        return None
     pass
-
